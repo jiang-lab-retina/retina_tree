@@ -56,6 +56,11 @@ Each dataset file contains:
 2. Connect the repo at [share.streamlit.io](https://share.streamlit.io).
 3. Set **Main file path** to `app.py`.
 4. In **Settings → Secrets**, add `admin_password` under `[app]` (do not commit this to GitHub).
+5. After each push, use **Manage app → Reboot** so Cloud reinstalls dependencies from `requirements.txt`.
+
+**Requirements:** Streamlit **1.52+** (interactive trees use `st.html` with JavaScript). The repo pins this in `requirements.txt`.
+
+**Blank page?** Open **Manage app → Logs**. If you see `TypeError` on `st.html`, reboot the app after upgrading Streamlit. Seed data ships in `data/retina_trees_data.json`; working copies are created on first run.
 
 **Note:** `original_dataset.json` and `working_dataset.json` live on the app filesystem and may reset on redeploy unless you use persistent storage.
 

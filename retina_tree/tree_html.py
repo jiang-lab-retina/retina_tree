@@ -13,6 +13,24 @@ from retina_tree.theme import APPLE_TREE_CSS
 VIEWER_CSS_PATH = Path(__file__).resolve().parent / "viewer.css"
 HORIZONTAL_TREE_CSS_PATH = Path(__file__).resolve().parent / "horizontal_tree.css"
 
+_embed_css_cache: str | None = None
+
+
+def get_embed_tree_css() -> str:
+    """Shared CSS for all tree cards (inject once per page)."""
+    global _embed_css_cache
+    if _embed_css_cache is None:
+        _embed_css_cache = (
+            VIEWER_CSS_PATH.read_text(encoding="utf-8")
+            + "\n"
+            + APPLE_TREE_CSS
+            + "\n"
+            + EMBED_LAYOUT_CSS
+            + "\n"
+            + HORIZONTAL_TREE_CSS_PATH.read_text(encoding="utf-8")
+        )
+    return _embed_css_cache
+
 # Scoped overrides when multiple cards share one Streamlit page (not isolated iframes).
 EMBED_LAYOUT_CSS = """
 .retina-tree-embed-outer {
@@ -257,6 +275,7 @@ def render_tree_card_html(
     card_id: str | None = None,
     focus_node_id: str | None = None,
     highlight_node_ids: set[str] | None = None,
+    include_styles: bool = False,
 ) -> str:
     derived = derive_box(box)
     card_id = card_id or derived["id"]
@@ -280,19 +299,11 @@ def render_tree_card_html(
     current_class = " current-box" if is_current else ""
     size_attr = ' data-size="large"' if is_large else ""
 
-    css = (
-        VIEWER_CSS_PATH.read_text(encoding="utf-8")
-        + "\n"
-        + APPLE_TREE_CSS
-        + "\n"
-        + EMBED_LAYOUT_CSS
-        + "\n"
-        + HORIZONTAL_TREE_CSS_PATH.read_text(encoding="utf-8")
-    )
+    style_block = f"<style>{get_embed_tree_css()}</style>" if include_styles else ""
 
     return f"""<div class="retina-tree-embed-outer">
 <div class="retina-tree-embed">
-<style>{css}</style>
+{style_block}
 <section class="tree-card{current_class}" id="{_escape(card_id)}"{size_attr}>
   <div class="card-head">
     <div class="card-title-row">

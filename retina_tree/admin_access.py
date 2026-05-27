@@ -19,7 +19,7 @@ def get_admin_password() -> str:
         app_cfg = st.secrets.get("app", {})
         if isinstance(app_cfg, dict):
             return str(app_cfg.get("admin_password", "")).strip()
-    except (FileNotFoundError, AttributeError, KeyError):
+    except Exception:
         pass
     return ""
 

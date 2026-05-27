@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import streamlit as st
 
-from retina_tree.tree_html import render_tree_card_html
+from retina_tree.streamlit_render import render_html_fragment, streamlit_supports_tree_html
+from retina_tree.tree_html import estimate_card_height, get_embed_tree_css, render_tree_card_html
 from retina_tree.ui import (
     configure_page,
     ensure_dataset_loaded,
@@ -49,6 +50,19 @@ def render_trees(
     if filter_box_id:
         boxes = [box for box in boxes if box["id"] == filter_box_id]
 
+    if not streamlit_supports_tree_html():
+        st.warning(
+            "Interactive trees need **Streamlit 1.52 or newer**. "
+            "Redeploy after upgrading `requirements.txt` on Streamlit Cloud."
+        )
+
+    if boxes and not st.session_state.get("_rt_tree_css_injected"):
+        st.markdown(
+            f"<style id='rt-embed-tree-css'>{get_embed_tree_css()}</style>",
+            unsafe_allow_html=True,
+        )
+        st.session_state._rt_tree_css_injected = True
+
     for box in boxes:
         box_focus = focus_node_id if focus_box_id and box["id"] == focus_box_id else None
         box_highlights = highlight_node_ids if focus_box_id and box["id"] == focus_box_id else None
@@ -60,28 +74,35 @@ def render_trees(
             focus_node_id=box_focus,
             highlight_node_ids=box_highlights,
         )
-        st.html(card_html, width="content", unsafe_allow_javascript=True)
+        render_html_fragment(
+            card_html,
+            height=estimate_card_height(box, view_mode),
+        )
 
 
 def main() -> None:
-    configure_page(title="Retina Trees")
-    inject_apple_theme()
-    ensure_dataset_loaded()
+    try:
+        configure_page(title="Retina Trees")
+        inject_apple_theme()
+        ensure_dataset_loaded()
 
-    render_compact_header()
+        render_compact_header()
 
-    search_box_id, search_focus_id, search_highlights = render_person_search()
-    filter_box_id = render_box_filter(search_box_id=search_box_id)
-    render_trees(
-        filter_box_id,
-        focus_node_id=search_focus_id,
-        focus_box_id=search_box_id,
-        highlight_node_ids=search_highlights or None,
-    )
+        search_box_id, search_focus_id, search_highlights = render_person_search()
+        filter_box_id = render_box_filter(search_box_id=search_box_id)
+        render_trees(
+            filter_box_id,
+            focus_node_id=search_focus_id,
+            focus_box_id=search_box_id,
+            highlight_node_ids=search_highlights or None,
+        )
 
-    render_view_toolbar()
-    render_status_banner()
-    render_site_footer()
+        render_view_toolbar()
+        render_status_banner()
+        render_site_footer()
+    except Exception as exc:
+        st.error("The app hit an error while loading. Details below.")
+        st.exception(exc)
 
 
 if __name__ == "__main__":
