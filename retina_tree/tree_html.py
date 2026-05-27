@@ -116,16 +116,31 @@ def render_tree_card_html(
   <script>
     const card = document.querySelector(".tree-card");
 
+    function measureContentHeight() {{
+      const doc = document.documentElement;
+      const body = document.body;
+      return Math.ceil(
+        Math.max(
+          doc.scrollHeight,
+          doc.offsetHeight,
+          body.scrollHeight,
+          body.offsetHeight,
+          card.scrollHeight,
+          card.offsetHeight
+        )
+      );
+    }}
+
     function reportHeight() {{
-      const height = Math.ceil(document.documentElement.getBoundingClientRect().height);
+      const height = Math.max(measureContentHeight(), 120);
       window.parent.postMessage({{ type: "streamlit:setFrameHeight", height }}, "*");
     }}
 
     function scheduleHeightReport() {{
-      requestAnimationFrame(() => {{
-        reportHeight();
-        requestAnimationFrame(reportHeight);
-      }});
+      reportHeight();
+      requestAnimationFrame(reportHeight);
+      requestAnimationFrame(() => requestAnimationFrame(reportHeight));
+      [50, 150, 350, 600].forEach((ms) => window.setTimeout(reportHeight, ms));
     }}
 
     function applyTreeMode(mode) {{
@@ -159,8 +174,11 @@ def render_tree_card_html(
       }});
     }});
 
+    const forest = card.querySelector(".forest");
     if (typeof ResizeObserver !== "undefined") {{
-      new ResizeObserver(scheduleHeightReport).observe(card);
+      const observer = new ResizeObserver(scheduleHeightReport);
+      observer.observe(card);
+      if (forest) observer.observe(forest);
     }}
     scheduleHeightReport();
     window.addEventListener("load", scheduleHeightReport);
@@ -169,15 +187,32 @@ def render_tree_card_html(
 </html>"""
 
 
+def _max_tree_depth(derived: dict, node_id: str, depth: int, path: set[str]) -> int:
+    if node_id in path:
+        return depth
+    children = derived["children"].get(node_id, [])
+    if not children:
+        return depth
+    return max(_max_tree_depth(derived, child, depth + 1, path | {node_id}) for child in children)
+
+
+def _tree_max_depth(derived: dict) -> int:
+    if not derived["roots"]:
+        return 0
+    return max(_max_tree_depth(derived, root_id, 0, set()) for root_id in derived["roots"])
+
+
 def estimate_card_height(box: dict, view_mode: str = "roots-only") -> int:
-    """Initial iframe height; embedded script shrinks/grows to match visible tree."""
+    """Initial iframe height; embedded script resizes to match visible tree."""
     derived = derive_box(box)
     header = 118
     root_count = max(1, len(derived["roots"]))
 
     if view_mode in ("roots-only", "collapse-all"):
-        # Collapsed view: mostly root row(s), not full node count
         rows = max(1, (root_count + 2) // 3)
         return min(720, max(168, header + rows * 52 + 16))
 
-    return min(1200, max(240, header + derived["node_count"] * 11))
+    depth = _tree_max_depth(derived)
+    # Expanded tree grows vertically by depth (~72px per level) plus root band
+    expanded = header + (depth + 1) * 72 + root_count * 8
+    return min(2400, max(280, expanded))

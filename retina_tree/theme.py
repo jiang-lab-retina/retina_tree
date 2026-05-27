@@ -213,7 +213,7 @@ html, body {
   height: auto;
   min-height: 0;
   margin: 0;
-  overflow: hidden;
+  overflow: visible;
   background: #ffffff;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", sans-serif;
 }

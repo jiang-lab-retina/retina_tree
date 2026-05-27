@@ -58,8 +58,11 @@ def render_trees(filter_box_id: str | None = None) -> None:
             view_mode=view_mode,
             card_id=box["id"],
         )
-        height = estimate_card_height(box, st.session_state.view_mode)
-        components.html(card_html, height=height, scrolling=False)
+        view_mode = st.session_state.view_mode
+        height = estimate_card_height(box, view_mode)
+        # Allow internal scroll only if Streamlit caps iframe growth (large expanded trees)
+        allow_scroll = view_mode == "expand-all" or len(box.get("nodes", [])) > 35
+        components.html(card_html, height=height, scrolling=allow_scroll)
 
 
 def main() -> None:
