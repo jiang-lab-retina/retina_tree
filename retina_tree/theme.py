@@ -6,8 +6,8 @@ APPLE_CSS = """
 
   #MainMenu, footer, header { visibility: hidden; height: 0; }
   .stApp {
-    background: #f5f5f7;
-    color: #1d1d1f;
+    background: #f2f2f4;
+    color: #3a3a3c;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", Inter, sans-serif;
   }
 
@@ -141,9 +141,9 @@ APPLE_CSS = """
   }
 
   div[data-testid="stButton"] > button {
-    border-radius: 980px;
+    border-radius: 8px;
     border: none;
-    background: #0071e3;
+    background: #5a7d8c;
     color: #ffffff;
     font-weight: 500;
     padding: 0.45rem 1rem;
@@ -152,7 +152,7 @@ APPLE_CSS = """
   }
 
   div[data-testid="stButton"] > button:hover {
-    background: #0077ed;
+    background: #4a6b78;
     color: #ffffff;
     border: none;
   }
@@ -196,24 +196,18 @@ APPLE_CSS = """
 
 APPLE_TREE_CSS = """
 :root {
-  --paper: #f5f5f7;
-  --paper-strong: #ffffff;
-  --ink: #1d1d1f;
-  --muted: #6e6e73;
-  --accent: #0071e3;
-  --accent-strong: #0077ed;
-  --accent-soft: rgba(0, 113, 227, 0.08);
-  --warning: #8a6d00;
-  --warning-bg: #fff8e6;
-  --error: #c41e12;
-  --error-bg: #ffeceb;
-  --success: #1d6b42;
-  --success-bg: #e8f7ee;
-  --branch: #d2d2d7;
-  --shadow: rgba(0, 0, 0, 0.06);
-  --card-border: rgba(0, 0, 0, 0.06);
-  --badge: #e8e8ed;
-  --badge-ink: #424245;
+  --paper: #f4f4f5;
+  --paper-strong: #fcfcfd;
+  --ink: #3a3a3c;
+  --muted: #8e8e93;
+  --accent: #5a7d8c;
+  --accent-strong: #4a6b78;
+  --accent-soft: rgba(90, 125, 140, 0.1);
+  --branch: #9a9aa1;
+  --shadow: rgba(0, 0, 0, 0.04);
+  --card-border: #e5e5ea;
+  --badge: #ececef;
+  --badge-ink: #6e6e73;
 }
 
 html, body {
@@ -221,100 +215,71 @@ html, body {
   min-height: 0;
   margin: 0;
   overflow: visible;
-  background: #ffffff;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", sans-serif;
+  background: transparent;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 .tree-card {
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  border-radius: 18px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  background: var(--paper-strong);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px var(--shadow);
   height: fit-content;
   width: 100%;
   overflow: visible;
 }
 
 .card-body {
-  padding: 0.5rem 0.65rem 0.65rem;
+  padding: 0.35rem 0.5rem 0.45rem;
   overflow: visible;
 }
 
-.forest {
-  padding: 0.15rem 0.2rem 0.3rem;
-}
-
-.root-list {
-  gap: 0.55rem 0.75rem;
-}
-
 .card-head {
-  padding: 0.75rem 0.85rem 0.65rem;
+  padding: 0.55rem 0.65rem 0.45rem;
+  background: #f8f8f9;
+  border-bottom: 1px solid #ebebed;
 }
 
 .card-title-row {
-  margin-bottom: 0.5rem;
-}
-
-.tree-card.current-box {
-  border-color: rgba(0, 113, 227, 0.35);
-  box-shadow: 0 4px 20px rgba(0, 113, 227, 0.12);
-}
-
-.card-head {
-  background: linear-gradient(180deg, rgba(0, 113, 227, 0.04), transparent), #ffffff;
+  margin-bottom: 0.35rem;
 }
 
 .card-title-row h2 {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size: 0.92rem;
   font-weight: 600;
   letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.card-title-row .meta {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.tree-card.current-box {
+  border-color: #c5c5cc;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.card-toolbar {
+  gap: 0.35rem;
 }
 
 .card-toolbar button {
-  border-radius: 980px;
-  border: none;
-  background: #e8e8ed;
-  color: #1d1d1f;
+  border-radius: 6px;
+  border: 1px solid #e0e0e5;
+  background: #ffffff;
+  color: #5c5c61;
   font-weight: 500;
-  font-size: 0.8rem;
-  padding: 0.38rem 0.72rem;
+  font-size: 0.7rem;
+  padding: 0.22rem 0.5rem;
 }
 
 .card-toolbar button:hover {
-  background: #dcdce1;
+  background: #f4f4f6;
+  border-color: #d0d0d6;
+  color: var(--ink);
   transform: none;
-}
-
-.node-button,
-.node-leaf {
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 12px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-  font-weight: 500;
-  font-size: 0.88rem;
-}
-
-.node-button:hover {
-  background: #f5f5f7;
-  border-color: rgba(0, 113, 227, 0.25);
-}
-
-.root-list > .tree-node > .node-row .node-button,
-.root-list > .tree-node > .node-row .node-leaf {
-  background: linear-gradient(180deg, #ffffff, #f5f5f7);
-  border-color: rgba(0, 113, 227, 0.2);
-  font-weight: 600;
-}
-
-.caret {
-  color: #0071e3;
-}
-
-.shared-badge {
-  background: #e8e8ed;
-  color: #424245;
-  font-weight: 600;
 }
 """

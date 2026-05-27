@@ -19,7 +19,7 @@ EMBED_LAYOUT_CSS = """
   width: 100%;
   overflow-x: auto;
   overflow-y: visible;
-  margin: 0 0 1rem;
+  margin: 0 0 0.65rem;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -63,20 +63,22 @@ EMBED_LAYOUT_CSS = """
 
 .retina-tree-embed .tree-node.search-hit .node-button,
 .retina-tree-embed .tree-node.search-hit .node-leaf {
-  border-color: rgba(0, 113, 227, 0.55);
-  box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.2);
+  border-color: #9ab0bb;
+  background: #f4f7f8;
+  box-shadow: 0 0 0 1px rgba(90, 125, 140, 0.25);
 }
 
 .retina-tree-embed .tree-node.search-focus .node-button,
 .retina-tree-embed .tree-node.search-focus .node-leaf {
-  border-color: #0071e3;
-  background: linear-gradient(180deg, #fff9eb, #ffe8a3);
-  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.35);
-  font-weight: 700;
+  border-color: #5a7d8c;
+  background: #eef3f5;
+  color: #2c2c2e;
+  box-shadow: 0 0 0 2px rgba(90, 125, 140, 0.22);
+  font-weight: 600;
 }
 
 .retina-tree-embed .tree-node.search-focus {
-  scroll-margin: 2rem;
+  scroll-margin: 1.25rem;
 }
 """
 
@@ -317,11 +319,11 @@ def render_tree_card_html(
 def estimate_card_height(box: dict, view_mode: str = "roots-only") -> int:
     """Legacy helper if iframe embedding is used elsewhere."""
     derived = derive_box(box)
-    header = 118
+    header = 88
     root_count = max(1, len(derived["roots"]))
     if view_mode in ("roots-only", "collapse-all"):
         rows = max(1, (root_count + 2) // 3)
-        return min(720, max(168, header + rows * 52 + 16))
+        return min(720, max(140, header + rows * 38 + 12))
     depth = max(
         (
             _tree_depth(derived, root_id, 0, set())
@@ -329,7 +331,7 @@ def estimate_card_height(box: dict, view_mode: str = "roots-only") -> int:
         ),
         default=0,
     )
-    return min(4000, max(280, header + (depth + 1) * 72))
+    return min(4000, max(220, header + (depth + 1) * 48))
 
 
 def _tree_depth(derived: dict, node_id: str, depth: int, path: set[str]) -> int:
