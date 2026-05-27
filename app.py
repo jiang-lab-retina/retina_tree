@@ -73,7 +73,7 @@ def render_trees(
 
 def main() -> None:
     try:
-        configure_page(title="Retina Trees")
+        configure_page(title="Retina Tree")
         inject_apple_theme()
         ensure_dataset_loaded()
 

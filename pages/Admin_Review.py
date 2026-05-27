@@ -26,7 +26,7 @@ from rtree.ui import (
     set_status,
 )
 
-configure_page(title="Admin Review · Retina Trees")
+configure_page(title="Admin Review · Retina Tree")
 inject_apple_theme()
 render_admin_access_gate()
 ensure_dataset_loaded()

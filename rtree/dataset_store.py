@@ -27,7 +27,7 @@ def ensure_datasets_exist() -> None:
             shutil.copy2(SEED_JSON_PATH, ORIGINAL_JSON_PATH)
         else:
             ORIGINAL_JSON_PATH.write_text(
-                serialize_dataset(normalize_dataset({"version": 1, "title": "Retina Trees", "boxes": []})),
+                serialize_dataset(normalize_dataset({"version": 1, "title": "Retina Tree", "boxes": []})),
                 encoding="utf-8",
             )
     if not WORKING_JSON_PATH.exists():

@@ -84,7 +84,7 @@ def normalize_links(raw_links: Any, node_map: dict[str, str]) -> list[dict[str, 
 def normalize_dataset(raw_data: Any) -> dict[str, Any]:
     dataset = {
         "version": int(raw_data.get("version", 1)) if isinstance(raw_data, dict) else 1,
-        "title": str(raw_data.get("title", "Retina Trees")) if isinstance(raw_data, dict) else "Retina Trees",
+        "title": str(raw_data.get("title", "Retina Tree")) if isinstance(raw_data, dict) else "Retina Tree",
         "boxes": [],
     }
 
@@ -130,7 +130,7 @@ def serialize_dataset(dataset: dict[str, Any]) -> str:
 
     payload = {
         "version": dataset.get("version", 1),
-        "title": dataset.get("title", "Retina Trees"),
+        "title": dataset.get("title", "Retina Tree"),
         "boxes": boxes_out,
     }
     return json.dumps(payload, indent=2) + "\n"

@@ -7,7 +7,7 @@ import html
 from pathlib import Path
 
 LOGO_PATH = Path(__file__).resolve().parent / "assets" / "logo.svg"
-BRAND_NAME = "Retina Trees"
+BRAND_NAME = "Retina Tree"
 BRAND_TAGLINE = "Academic lineage explorer"
 
 
@@ -48,7 +48,7 @@ def render_home_landing_html(
             f"{'s' if tree_count != 1 else ''}</p>"
         )
     return f"""
-    <section class="rt-landing-hero" aria-label="Retina Trees home">
+    <section class="rt-landing-hero" aria-label="Retina Tree home">
       <div class="rt-landing-mark">{logo_img_html(size=112)}</div>
       <p class="rt-landing-eyebrow">{html.escape(BRAND_NAME)}</p>
       <h1 class="rt-landing-title">{safe_title}</h1>

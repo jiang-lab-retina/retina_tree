@@ -111,7 +111,7 @@ def render_status_banner() -> None:
 
 def render_page_header(*, subtitle: str) -> None:
     dataset = st.session_state.dataset
-    title = dataset["title"] if dataset else "Retina Trees"
+    title = dataset["title"] if dataset else "Retina Tree"
     render_custom_html(
         f'<div class="rt-hero-shell">{render_brand_row(title=title, subtitle=subtitle, show_tagline=False)}</div>'
     )
@@ -120,7 +120,7 @@ def render_page_header(*, subtitle: str) -> None:
 def render_home_header() -> None:
     """Compact header (other pages). Home uses render_home_landing."""
     dataset = st.session_state.dataset
-    title = dataset["title"] if dataset else "Retina Trees"
+    title = dataset["title"] if dataset else "Retina Tree"
     render_custom_html(
         f'<div class="rt-hero-shell">{render_brand_row(title=title, show_tagline=True)}</div>'
     )
@@ -129,7 +129,7 @@ def render_home_header() -> None:
 def render_home_landing() -> None:
     """Large icon + title hero; trees load in the section below."""
     dataset = st.session_state.dataset
-    title = dataset["title"] if dataset else "Retina Trees"
+    title = dataset["title"] if dataset else "Retina Tree"
     tree_count = len(dataset["boxes"]) if dataset and dataset.get("boxes") else 0
     render_custom_html(
         render_home_landing_html(title=title, tree_count=tree_count or None)

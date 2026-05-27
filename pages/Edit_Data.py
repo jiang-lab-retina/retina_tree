@@ -13,7 +13,7 @@ from rtree.ui import (
     render_site_footer,
 )
 
-configure_page(title="Edit Data · Retina Trees")
+configure_page(title="Edit Data · Retina Tree")
 inject_apple_theme()
 ensure_dataset_loaded()
 
