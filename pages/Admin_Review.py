@@ -19,11 +19,12 @@ from retina_tree.ui import (
     inject_apple_theme,
     reload_working_dataset,
     render_page_header,
+    render_site_footer,
     render_status_banner,
     set_status,
 )
 
-configure_page(title="Admin Review · Retina Trees", icon="🛡️")
+configure_page(title="Admin Review · Retina Trees")
 inject_apple_theme()
 render_admin_access_gate()
 ensure_dataset_loaded()
@@ -87,3 +88,4 @@ with reject_col:
         st.rerun()
 
 render_status_banner()
+render_site_footer()

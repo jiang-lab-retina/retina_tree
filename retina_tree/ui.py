@@ -18,20 +18,33 @@ from retina_tree.dataset_store import (
     save_working_dataset,
 )
 from retina_tree.search import PersonMatch, search_dataset
+from retina_tree.branding import (
+    LOGO_PATH,
+    render_ambient_decor,
+    render_brand_row,
+    render_section_rule,
+    site_footer_html,
+)
 from retina_tree.theme import APPLE_CSS
 
 
 def inject_apple_theme() -> None:
     st.markdown(APPLE_CSS, unsafe_allow_html=True)
+    st.markdown(render_ambient_decor(), unsafe_allow_html=True)
 
 
-def configure_page(*, title: str, icon: str = "🌳") -> None:
+def configure_page(*, title: str, icon: str | None = None) -> None:
+    page_icon = icon if icon is not None else str(LOGO_PATH)
     st.set_page_config(
         page_title=title,
-        page_icon=icon,
+        page_icon=page_icon,
         layout="wide",
         initial_sidebar_state="collapsed",
     )
+
+
+def render_site_footer() -> None:
+    st.markdown(site_footer_html(), unsafe_allow_html=True)
 
 
 def init_session_state() -> None:
@@ -102,12 +115,17 @@ def render_page_header(*, subtitle: str) -> None:
     dataset = st.session_state.dataset
     title = dataset["title"] if dataset else "Retina Trees"
     st.markdown(
-        f"""
-        <div class="apple-hero">
-          <h1>{title}</h1>
-          <p class="subtitle">{subtitle}</p>
-        </div>
-        """,
+        f'<div class="rt-hero-shell">{render_brand_row(title=title, subtitle=subtitle, show_tagline=False)}</div>',
+        unsafe_allow_html=True,
+    )
+
+
+def render_home_header() -> None:
+    """Logo + dataset title + nav links for the home page."""
+    dataset = st.session_state.dataset
+    title = dataset["title"] if dataset else "Retina Trees"
+    st.markdown(
+        f'<div class="rt-hero-shell">{render_brand_row(title=title, show_tagline=True)}</div>',
         unsafe_allow_html=True,
     )
 
@@ -168,7 +186,7 @@ def render_person_search() -> tuple[str | None, str | None, set[str]]:
     if not dataset:
         return None, None, set()
 
-    st.markdown('<p class="apple-section-label">Search people</p>', unsafe_allow_html=True)
+    st.markdown(render_section_rule(label="Search"), unsafe_allow_html=True)
 
     query = st.text_input(
         "Search",
@@ -277,7 +295,7 @@ def render_editor_page() -> None:
 
     st.caption(f"{len(box['nodes'])} nodes · {len(box['links'])} links")
 
-    st.markdown('<p class="apple-section-label">Edit nodes & links</p>', unsafe_allow_html=True)
+    st.markdown(render_section_rule(label="Edit"), unsafe_allow_html=True)
     left, mid, right = st.columns(3)
 
     with left:

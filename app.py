@@ -10,27 +10,19 @@ from retina_tree.ui import (
     ensure_dataset_loaded,
     inject_apple_theme,
     render_box_filter,
+    render_home_header,
     render_pending_badge,
     render_person_search,
+    render_site_footer,
     render_status_banner,
     render_view_toolbar,
 )
 
 
 def render_compact_header() -> None:
-    dataset = st.session_state.dataset
-    title = dataset["title"] if dataset else "Retina Trees"
-
+    render_home_header()
     left, mid, right = st.columns([3, 1, 1])
     with left:
-        st.markdown(
-            f"""
-            <div class="apple-hero" style="margin-bottom:0.5rem;">
-              <h1 style="font-size:1.75rem;margin-bottom:0.15rem;">{title}</h1>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
         render_pending_badge()
     with mid:
         st.page_link("pages/Edit_Data.py", label="Edit data", icon="✏️", use_container_width=True)
@@ -72,7 +64,7 @@ def render_trees(
 
 
 def main() -> None:
-    configure_page(title="Retina Trees", icon="🌳")
+    configure_page(title="Retina Trees")
     inject_apple_theme()
     ensure_dataset_loaded()
 
@@ -89,6 +81,7 @@ def main() -> None:
 
     render_view_toolbar()
     render_status_banner()
+    render_site_footer()
 
 
 if __name__ == "__main__":

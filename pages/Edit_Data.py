@@ -8,9 +8,10 @@ from retina_tree.ui import (
     inject_apple_theme,
     render_editor_page,
     render_page_header,
+    render_site_footer,
 )
 
-configure_page(title="Edit Data · Retina Trees", icon="✏️")
+configure_page(title="Edit Data · Retina Trees")
 inject_apple_theme()
 ensure_dataset_loaded()
 
@@ -18,3 +19,4 @@ render_page_header(
     subtitle="Edits update the live trees right away. The original dataset stays unchanged until an administrator accepts or rejects."
 )
 render_editor_page()
+render_site_footer()
