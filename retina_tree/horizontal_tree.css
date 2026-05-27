@@ -5,9 +5,8 @@
   --rt-muted: #8e8e93;
   --rt-branch: #9a9aa1;
   --rt-branch-w: 1.5px;
-  --rt-gap-x: 0.72rem;
-  --rt-gap-y: 0.2rem;
-  --rt-node-h: 1.65rem;
+  --rt-gap-x: 0.75rem;
+  --rt-gap-y: 0.18rem;
   --rt-node-bg: #fafafa;
   --rt-node-border: #e3e3e8;
   --rt-node-root-bg: #f3f4f6;
@@ -27,7 +26,18 @@
   padding: 0;
 }
 
-/* Reset vertical-tree rules from viewer.css */
+/* Kill all legacy vertical-tree pseudo lines from viewer.css */
+.retina-tree-embed .tree-node::before,
+.retina-tree-embed .tree-node::after,
+.retina-tree-embed .tree ul::before,
+.retina-tree-embed .tree ul::after {
+  content: none !important;
+  display: none !important;
+  border: none !important;
+  background: none !important;
+}
+
+/* Child group: full-height vertical spine via border-left (2+ siblings) */
 .retina-tree-embed .tree ul {
   position: relative;
   display: flex;
@@ -36,29 +46,12 @@
   align-items: flex-start;
   margin: 0;
   padding: 0 0 0 var(--rt-gap-x);
+  border-left: none;
   flex-wrap: nowrap;
 }
 
-.retina-tree-embed .tree ul::before {
-  content: "" !important;
-  display: block !important;
-  position: absolute !important;
-  top: calc(var(--rt-node-h) / 2) !important;
-  bottom: calc(var(--rt-node-h) / 2) !important;
-  left: 0 !important;
-  right: auto !important;
-  width: 0 !important;
-  height: auto !important;
-  margin: 0 !important;
-  border: none !important;
-  border-left: var(--rt-branch-w) solid var(--rt-branch) !important;
-  border-top: none !important;
-  transform: none !important;
-}
-
-/* Single child: no spine, only a horizontal link */
-.retina-tree-embed .tree ul:has(> .tree-node:only-child)::before {
-  display: none !important;
+.retina-tree-embed .tree ul:has(> .tree-node:nth-child(2)) {
+  border-left: var(--rt-branch-w) solid var(--rt-branch);
 }
 
 .retina-tree-embed .tree-node {
@@ -69,40 +62,43 @@
   flex-shrink: 0;
   padding: var(--rt-gap-y) 0;
   min-width: 0;
-  min-height: var(--rt-node-h);
 }
 
-/* Horizontal branch from spine to each child (no vertical ticks) */
-.retina-tree-embed .tree-node::before,
-.retina-tree-embed .tree-node::after {
-  content: none !important;
-  display: none !important;
-  border: none !important;
-  background: none !important;
-  width: 0 !important;
-  height: 0 !important;
-}
-
+/* Horizontal link from spine (ul border) to each child */
 .retina-tree-embed .tree ul > .tree-node::before {
   content: "" !important;
   display: block !important;
   position: absolute !important;
   top: 50% !important;
   left: calc(-1 * var(--rt-gap-x)) !important;
-  right: auto !important;
   width: var(--rt-gap-x) !important;
   height: 0 !important;
   margin: 0 !important;
   padding: 0 !important;
   border: none !important;
   border-top: var(--rt-branch-w) solid var(--rt-branch) !important;
-  border-left: none !important;
-  border-right: none !important;
-  border-radius: 0 !important;
   transform: translateY(-50%) !important;
+  pointer-events: none;
+  z-index: 1;
 }
 
-/* Horizontal stub from parent node into the child group */
+/* Single child: no vertical spine, one horizontal link only */
+.retina-tree-embed .tree ul:has(> .tree-node:only-child) > .tree-node::before {
+  left: calc(-1 * var(--rt-gap-x)) !important;
+  width: var(--rt-gap-x) !important;
+}
+
+/* Parent → child group: horizontal into spine or single-child link */
+.retina-tree-embed .tree-node.has-children {
+  align-items: center;
+}
+
+.retina-tree-embed .tree-node.has-children > .node-row {
+  position: relative;
+  flex: 0 0 auto;
+  z-index: 2;
+}
+
 .retina-tree-embed .tree-node.has-children > .node-row::after {
   content: "" !important;
   display: block !important;
@@ -115,6 +111,12 @@
   border-top: var(--rt-branch-w) solid var(--rt-branch) !important;
   transform: translateY(-50%) !important;
   pointer-events: none;
+  z-index: 1;
+}
+
+/* When multiple children, extend parent stub to meet the vertical spine */
+.retina-tree-embed .tree-node.has-children:has(> ul > .tree-node:nth-child(2)) > .node-row::after {
+  width: calc(var(--rt-gap-x) + var(--rt-branch-w)) !important;
 }
 
 .retina-tree-embed .root-list {
@@ -125,8 +127,8 @@
   flex-wrap: nowrap;
 }
 
-.retina-tree-embed .root-list::before {
-  display: none !important;
+.retina-tree-embed .root-list > .tree-node {
+  padding: 0;
 }
 
 .retina-tree-embed .root-list > .tree-node::before,
@@ -136,15 +138,10 @@
   content: none !important;
 }
 
-.retina-tree-embed .root-list > .tree-node {
-  padding: 0;
-  min-height: var(--rt-node-h);
-}
-
 .retina-tree-embed .node-row {
   position: relative;
   flex: 0 0 auto;
-  z-index: 1;
+  z-index: 2;
 }
 
 .retina-tree-embed .node-button,
