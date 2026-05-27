@@ -9,6 +9,10 @@ APPLE_CSS = (
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   #MainMenu, footer, [data-testid="stHeader"] {
     visibility: hidden !important;
     height: 0 !important;
@@ -336,6 +340,101 @@ APPLE_CSS = (
     letter-spacing: -0.01em;
     line-height: 1.35;
     max-width: 42rem;
+  }
+
+  /* Home landing hero — large icon & title, trees below on scroll */
+  .rt-landing-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: min(78vh, 640px);
+    padding: 2.5rem 1.25rem 2.75rem;
+    margin: -0.5rem -0.25rem 0;
+    box-sizing: border-box;
+  }
+
+  .rt-landing-mark {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 7rem;
+    height: 7rem;
+    margin-bottom: 1.35rem;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  }
+
+  .rt-landing-mark .rt-logo-img {
+    width: 5.5rem;
+    height: 5.5rem;
+  }
+
+  .rt-landing-eyebrow {
+    margin: 0 0 0.35rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #86868b;
+  }
+
+  .rt-landing-title {
+    margin: 0;
+    font-size: clamp(2.75rem, 9vw, 4.25rem);
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 1.02;
+    color: #1d1d1f;
+    max-width: 18ch;
+  }
+
+  .rt-landing-tagline {
+    margin: 0.65rem 0 0;
+    font-size: clamp(1rem, 2.5vw, 1.2rem);
+    font-weight: 400;
+    color: #6e6e73;
+    letter-spacing: -0.01em;
+    max-width: 28rem;
+  }
+
+  .rt-landing-meta {
+    margin: 0.5rem 0 0;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: #5a7d8c;
+  }
+
+  .rt-landing-scroll {
+    display: inline-flex;
+    align-items: center;
+    margin-top: 2rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: #5a7d8c;
+    text-decoration: none;
+    border-radius: 999px;
+    background: rgba(90, 125, 140, 0.1);
+    border: 1px solid rgba(90, 125, 140, 0.2);
+    transition: background 0.2s ease;
+  }
+
+  .rt-landing-scroll:hover {
+    background: rgba(90, 125, 140, 0.16);
+    color: #4a6b78;
+  }
+
+  .rt-trees-section {
+    scroll-margin-top: 1rem;
+    padding-top: 0.25rem;
+  }
+
+  .rt-trees-section .rt-section-rule {
+    margin-top: 0.5rem;
   }
 
   .rt-hero-shell {

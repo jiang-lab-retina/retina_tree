@@ -13,17 +13,17 @@ from rtree.ui import (
     ensure_dataset_loaded,
     inject_apple_theme,
     render_box_filter,
-    render_home_header,
+    render_home_landing,
     render_pending_badge,
     render_person_search,
     render_site_footer,
     render_status_banner,
+    render_trees_section_intro,
     render_view_toolbar,
 )
 
 
-def render_compact_header() -> None:
-    render_home_header()
+def render_home_nav() -> None:
     render_pending_badge()
     nav1, nav2 = st.columns(2)
     with nav1:
@@ -77,10 +77,14 @@ def main() -> None:
         inject_apple_theme()
         ensure_dataset_loaded()
 
-        render_compact_header()
+        render_home_landing()
 
+        render_home_nav()
         search_box_id, search_focus_id, search_highlights = render_person_search()
         filter_box_id = render_box_filter(search_box_id=search_box_id)
+
+        render_trees_section_intro()
+        render_view_toolbar()
         render_trees(
             filter_box_id,
             focus_node_id=search_focus_id,
@@ -88,7 +92,6 @@ def main() -> None:
             highlight_node_ids=search_highlights or None,
         )
 
-        render_view_toolbar()
         render_status_banner()
         render_site_footer()
     except Exception as exc:

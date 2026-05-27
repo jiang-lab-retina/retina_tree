@@ -34,6 +34,39 @@ def brand_mark_html(*, size: int = 40) -> str:
     return f'<span class="rt-logo-wrap" aria-hidden="true">{logo_img_html(size=size)}</span>'
 
 
+def render_home_landing_html(
+    *,
+    title: str | None = None,
+    tree_count: int | None = None,
+) -> str:
+    """Full-width hero: large icon and title; trees appear below on scroll."""
+    safe_title = html.escape(title or BRAND_NAME)
+    meta = ""
+    if tree_count is not None and tree_count > 0:
+        meta = (
+            f'<p class="rt-landing-meta">{tree_count} lineage tree'
+            f"{'s' if tree_count != 1 else ''}</p>"
+        )
+    return f"""
+    <section class="rt-landing-hero" aria-label="Retina Trees home">
+      <div class="rt-landing-mark">{logo_img_html(size=112)}</div>
+      <p class="rt-landing-eyebrow">{html.escape(BRAND_NAME)}</p>
+      <h1 class="rt-landing-title">{safe_title}</h1>
+      <p class="rt-landing-tagline">{html.escape(BRAND_TAGLINE)}</p>
+      {meta}
+      <a class="rt-landing-scroll" href="#rt-trees-section">Scroll to explore trees</a>
+    </section>
+    """
+
+
+def render_trees_section_intro_html() -> str:
+    return """
+    <section class="rt-trees-section" id="rt-trees-section">
+      <div class="rt-section-rule"><span>Lineage trees</span></div>
+    </section>
+    """
+
+
 def render_brand_row(
     *,
     title: str | None = None,

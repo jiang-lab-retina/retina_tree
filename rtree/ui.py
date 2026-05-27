@@ -21,11 +21,15 @@ from rtree.search import PersonMatch, search_dataset
 from rtree.branding import (
     LOGO_PATH,
     render_brand_row,
+    render_home_landing_html,
     render_section_rule,
+    render_trees_section_intro_html,
     site_footer_html,
 )
 from rtree.streamlit_render import render_custom_html
 from rtree.theme import APPLE_CSS
+
+
 def inject_apple_theme() -> None:
     st.markdown(APPLE_CSS, unsafe_allow_html=True)
 
@@ -114,12 +118,26 @@ def render_page_header(*, subtitle: str) -> None:
 
 
 def render_home_header() -> None:
-    """Logo + dataset title + nav links for the home page."""
+    """Compact header (other pages). Home uses render_home_landing."""
     dataset = st.session_state.dataset
     title = dataset["title"] if dataset else "Retina Trees"
     render_custom_html(
         f'<div class="rt-hero-shell">{render_brand_row(title=title, show_tagline=True)}</div>'
     )
+
+
+def render_home_landing() -> None:
+    """Large icon + title hero; trees load in the section below."""
+    dataset = st.session_state.dataset
+    title = dataset["title"] if dataset else "Retina Trees"
+    tree_count = len(dataset["boxes"]) if dataset and dataset.get("boxes") else 0
+    render_custom_html(
+        render_home_landing_html(title=title, tree_count=tree_count or None)
+    )
+
+
+def render_trees_section_intro() -> None:
+    render_custom_html(render_trees_section_intro_html())
 
 
 def render_pending_badge() -> None:
