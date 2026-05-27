@@ -1,17 +1,17 @@
-"""Home page: view approved retina lineage trees."""
+"""Home page: view live retina lineage trees."""
 
 from __future__ import annotations
 
 import streamlit as st
 import streamlit.components.v1 as components
 
-from retina_tree.auth import is_admin, render_account_bar
 from retina_tree.tree_html import estimate_card_height, render_tree_card_html
 from retina_tree.ui import (
     configure_page,
     ensure_dataset_loaded,
     inject_apple_theme,
     render_box_filter,
+    render_pending_badge,
     render_status_banner,
     render_view_toolbar,
 )
@@ -31,13 +31,11 @@ def render_compact_header() -> None:
             """,
             unsafe_allow_html=True,
         )
+        render_pending_badge()
     with mid:
-        st.page_link("pages/Edit_Data.py", label="Propose edit", icon="✏️", use_container_width=True)
+        st.page_link("pages/Edit_Data.py", label="Edit data", icon="✏️", use_container_width=True)
     with right:
-        if is_admin():
-            st.page_link("pages/Admin_Review.py", label="Admin", icon="🛡️", use_container_width=True)
-
-    render_account_bar()
+        st.page_link("pages/Admin_Review.py", label="Admin", icon="🛡️", use_container_width=True)
 
 
 def render_trees(filter_box_id: str | None = None) -> None:

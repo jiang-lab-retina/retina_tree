@@ -1,6 +1,6 @@
 # Retina Trees Viewer
 
-Streamlit app for exploring retina lineage trees from JSON linkage data. The home page shows **approved** trees; contributors sign in with **Google**, submit tracked edits, and **administrators** approve changes before they go live.
+Streamlit app for exploring and editing retina lineage trees. **Edits appear immediately** on the live trees. A separate **original** copy is kept for administrators to **accept** (make permanent) or **reject** (revert the live view).
 
 ## Quick start
 
@@ -8,37 +8,24 @@ Streamlit app for exploring retina lineage trees from JSON linkage data. The hom
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-cp .streamlit/secrets.toml.example .streamlit/secrets.toml
-# Edit secrets.toml with Google OAuth credentials and admin emails
 streamlit run app.py
 ```
 
-On first run, `data/approved_dataset.json` is created from `data/retina_trees_data.json`.
+On first run, `data/original_dataset.json` and `data/working_dataset.json` are created from `data/retina_trees_data.json`.
 
-## Google sign-in setup
+## How it works
 
-1. In [Google Cloud Console](https://console.cloud.google.com/), create an **OAuth 2.0 Client ID** (Web application).
-2. Add authorized redirect URI:
-   - Local: `http://localhost:8501/oauth2callback`
-   - Streamlit Cloud: `https://<your-app>.streamlit.app/oauth2callback`
-3. Copy Client ID and Client Secret into `.streamlit/secrets.toml` (see `.streamlit/secrets.toml.example`).
-4. Set `app.admin_emails` to the Google accounts that may approve edits.
+| Copy | File | Purpose |
+|------|------|---------|
+| **Original** | `data/original_dataset.json` | Last permanently accepted data |
+| **Live (working)** | `data/working_dataset.json` | What everyone sees; updated on each edit |
 
-Requires **Streamlit ≥ 1.42** (`st.login` / OIDC).
+1. Anyone opens **Edit data** and changes nodes or links → **live trees update right away**.
+2. **Admin review** compares original vs live, lists every difference, and offers:
+   - **Accept all** — copy live → original (changes become permanent)
+   - **Reject all** — copy original → live (undo unpublished edits)
 
-### Local dev without Google
-
-Set `app.allow_dev_login = true` in `secrets.toml` and leave OAuth blank to use email-only dev sign-in (not for production).
-
-## Workflow
-
-| Role | What they do |
-|------|----------------|
-| **Visitor** | Browse approved trees on the home page |
-| **Contributor** | Sign in → **Propose edit** → submit node/link changes (tracked in SQLite) |
-| **Administrator** | **Admin review** → approve (publishes to `approved_dataset.json`) or reject with a note |
-
-Contributors see status of their submissions on the edit page. Admins see a pending queue and recent history.
+Optional: set `app.admin_password` in `.streamlit/secrets.toml` to lock the admin page (see `.streamlit/secrets.toml.example`).
 
 ## Data format
 
@@ -54,11 +41,11 @@ Each dataset file contains:
 ## Deploy on Streamlit Community Cloud
 
 1. Push this repository to GitHub.
-2. Open [share.streamlit.io](https://share.streamlit.io) and connect the repo.
+2. Connect the repo at [share.streamlit.io](https://share.streamlit.io).
 3. Set **Main file path** to `app.py`.
-4. Add secrets from `.streamlit/secrets.toml.example` (use your production `redirect_uri`).
+4. Optionally add `admin_password` under `[app]` in Secrets.
 
-**Note:** Streamlit Cloud filesystem is ephemeral. `data/proposals.db` and `data/approved_dataset.json` reset on redeploy unless you use persistent storage or an external database. For production, plan to back up approved JSON or attach external storage.
+**Note:** `original_dataset.json` and `working_dataset.json` live on the app filesystem and may reset on redeploy unless you use persistent storage.
 
 ## Repository
 

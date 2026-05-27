@@ -12,3 +12,5 @@ ENV/
 .streamlit/secrets.toml
 data/proposals.db
 data/approved_dataset.json
+data/original_dataset.json
+data/working_dataset.json
