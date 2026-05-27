@@ -60,7 +60,7 @@ Each dataset file contains:
 
 **Requirements:** Streamlit **1.52+** (interactive trees use `st.html` with JavaScript). The repo pins this in `requirements.txt`.
 
-**Blank page?** Open **Manage app → Logs**. If you see `TypeError` on `st.html`, reboot the app after upgrading Streamlit. Seed data ships in `data/retina_trees_data.json`; working copies are created on first run.
+**Blank page?** Open **Manage app → Logs**. Common causes: `KeyError: 'retina_tree.tree_html'` (fixed by using the `rtree` package — do not rename it back to match the repo), or `TypeError` on `st.html` (reboot after upgrading Streamlit). Seed data ships in `data/retina_trees_data.json`; working copies are created on first run.
 
 **Note:** `original_dataset.json` and `working_dataset.json` live on the app filesystem and may reset on redeploy unless you use persistent storage.
 

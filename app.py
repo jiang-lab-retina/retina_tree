@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import site_setup  # noqa: F401
+
 import streamlit as st
 
-from retina_tree.streamlit_render import render_html_fragment, streamlit_supports_tree_html
-from retina_tree.tree_html import estimate_card_height, get_embed_tree_css, render_tree_card_html
-from retina_tree.ui import (
+from rtree.streamlit_render import render_html_fragment, streamlit_supports_tree_html
+from rtree.tree_html import estimate_card_height, get_embed_tree_css, render_tree_card_html
+from rtree.ui import (
     configure_page,
     ensure_dataset_loaded,
     inject_apple_theme,

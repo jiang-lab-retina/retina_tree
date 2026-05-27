@@ -2,18 +2,20 @@
 
 from __future__ import annotations
 
+import site_setup  # noqa: F401
+
 import streamlit as st
 
-from retina_tree.admin_access import render_admin_access_gate
-from retina_tree.dataset_diff import diff_datasets, summarize_changes
-from retina_tree.dataset_store import (
+from rtree.admin_access import render_admin_access_gate
+from rtree.dataset_diff import diff_datasets, summarize_changes
+from rtree.dataset_store import (
     accept_all_changes,
     has_pending_changes,
     load_original_dataset,
     load_working_dataset,
     reject_all_changes,
 )
-from retina_tree.ui import (
+from rtree.ui import (
     configure_page,
     ensure_dataset_loaded,
     inject_apple_theme,

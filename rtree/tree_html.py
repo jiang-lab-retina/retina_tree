@@ -6,30 +6,14 @@ import html
 import json
 from pathlib import Path
 
-from retina_tree.data_utils import derive_box
-from retina_tree.search import focus_in_subtree
-from retina_tree.theme import APPLE_TREE_CSS
+from rtree.data_utils import derive_box
+from rtree.search import focus_in_subtree
+from rtree.theme import APPLE_TREE_CSS
 
 VIEWER_CSS_PATH = Path(__file__).resolve().parent / "viewer.css"
 HORIZONTAL_TREE_CSS_PATH = Path(__file__).resolve().parent / "horizontal_tree.css"
 
 _embed_css_cache: str | None = None
-
-
-def get_embed_tree_css() -> str:
-    """Shared CSS for all tree cards (inject once per page)."""
-    global _embed_css_cache
-    if _embed_css_cache is None:
-        _embed_css_cache = (
-            VIEWER_CSS_PATH.read_text(encoding="utf-8")
-            + "\n"
-            + APPLE_TREE_CSS
-            + "\n"
-            + EMBED_LAYOUT_CSS
-            + "\n"
-            + HORIZONTAL_TREE_CSS_PATH.read_text(encoding="utf-8")
-        )
-    return _embed_css_cache
 
 # Scoped overrides when multiple cards share one Streamlit page (not isolated iframes).
 EMBED_LAYOUT_CSS = """
@@ -99,6 +83,22 @@ EMBED_LAYOUT_CSS = """
   scroll-margin: 1.25rem;
 }
 """
+
+
+def get_embed_tree_css() -> str:
+    """Shared CSS for all tree cards (inject once per page)."""
+    global _embed_css_cache
+    if _embed_css_cache is None:
+        _embed_css_cache = (
+            VIEWER_CSS_PATH.read_text(encoding="utf-8")
+            + "\n"
+            + APPLE_TREE_CSS
+            + "\n"
+            + EMBED_LAYOUT_CSS
+            + "\n"
+            + HORIZONTAL_TREE_CSS_PATH.read_text(encoding="utf-8")
+        )
+    return _embed_css_cache
 
 
 def _escape(text: str) -> str:

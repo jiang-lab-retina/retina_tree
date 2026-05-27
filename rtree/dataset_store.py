@@ -7,7 +7,7 @@ import shutil
 from copy import deepcopy
 from pathlib import Path
 
-from retina_tree.data_utils import (
+from rtree.data_utils import (
     DEFAULT_JSON_PATH,
     load_dataset_from_path,
     normalize_dataset,

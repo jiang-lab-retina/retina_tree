@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from retina_tree.ui import (
+import site_setup  # noqa: F401
+
+from rtree.ui import (
     configure_page,
     ensure_dataset_loaded,
     inject_apple_theme,

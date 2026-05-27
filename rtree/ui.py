@@ -6,26 +6,26 @@ import json
 
 import streamlit as st
 
-from retina_tree.data_utils import (
+from rtree.data_utils import (
     get_current_box,
     serialize_dataset,
     slugify_id,
     unique_node_id,
 )
-from retina_tree.dataset_store import (
+from rtree.dataset_store import (
     has_pending_changes,
     load_working_dataset,
     save_working_dataset,
 )
-from retina_tree.search import PersonMatch, search_dataset
-from retina_tree.branding import (
+from rtree.search import PersonMatch, search_dataset
+from rtree.branding import (
     LOGO_PATH,
     render_ambient_decor,
     render_brand_row,
     render_section_rule,
     site_footer_html,
 )
-from retina_tree.theme import APPLE_CSS
+from rtree.theme import APPLE_CSS
 
 
 def inject_apple_theme() -> None:
