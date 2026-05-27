@@ -116,6 +116,18 @@ def render_tree_card_html(
   <script>
     const card = document.querySelector(".tree-card");
 
+    function reportHeight() {{
+      const height = Math.ceil(document.documentElement.getBoundingClientRect().height);
+      window.parent.postMessage({{ type: "streamlit:setFrameHeight", height }}, "*");
+    }}
+
+    function scheduleHeightReport() {{
+      requestAnimationFrame(() => {{
+        reportHeight();
+        requestAnimationFrame(reportHeight);
+      }});
+    }}
+
     function applyTreeMode(mode) {{
       card.querySelectorAll(".tree-node.has-children").forEach((node) => {{
         const depth = Number(node.dataset.depth || 0);
@@ -131,6 +143,7 @@ def render_tree_card_html(
           button.setAttribute("aria-expanded", String(!collapse));
         }}
       }});
+      scheduleHeightReport();
     }}
 
     card.querySelectorAll(".card-toolbar button").forEach((button) => {{
@@ -142,13 +155,29 @@ def render_tree_card_html(
         const node = button.closest(".tree-node");
         const collapsed = node.classList.toggle("collapsed");
         button.setAttribute("aria-expanded", String(!collapsed));
+        scheduleHeightReport();
       }});
     }});
+
+    if (typeof ResizeObserver !== "undefined") {{
+      new ResizeObserver(scheduleHeightReport).observe(card);
+    }}
+    scheduleHeightReport();
+    window.addEventListener("load", scheduleHeightReport);
   </script>
 </body>
 </html>"""
 
 
-def estimate_card_height(box: dict) -> int:
+def estimate_card_height(box: dict, view_mode: str = "roots-only") -> int:
+    """Initial iframe height; embedded script shrinks/grows to match visible tree."""
     derived = derive_box(box)
-    return min(1200, max(320, 180 + derived["node_count"] * 14))
+    header = 118
+    root_count = max(1, len(derived["roots"]))
+
+    if view_mode in ("roots-only", "collapse-all"):
+        # Collapsed view: mostly root row(s), not full node count
+        rows = max(1, (root_count + 2) // 3)
+        return min(720, max(168, header + rows * 52 + 16))
+
+    return min(1200, max(240, header + derived["node_count"] * 11))

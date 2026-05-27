@@ -58,8 +58,8 @@ def render_trees(filter_box_id: str | None = None) -> None:
             view_mode=view_mode,
             card_id=box["id"],
         )
-        height = estimate_card_height(box)
-        components.html(card_html, height=height, scrolling=True)
+        height = estimate_card_height(box, st.session_state.view_mode)
+        components.html(card_html, height=height, scrolling=False)
 
 
 def main() -> None:

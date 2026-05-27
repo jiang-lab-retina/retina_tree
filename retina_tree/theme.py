@@ -210,6 +210,10 @@ APPLE_TREE_CSS = """
 }
 
 html, body {
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  overflow: hidden;
   background: #ffffff;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", sans-serif;
 }
@@ -219,6 +223,29 @@ html, body {
   border: 1px solid rgba(0, 0, 0, 0.06);
   border-radius: 18px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  height: fit-content;
+  width: 100%;
+}
+
+.card-body {
+  padding: 0.5rem 0.65rem 0.65rem;
+  overflow: visible;
+}
+
+.forest {
+  padding: 0.15rem 0.2rem 0.3rem;
+}
+
+.root-list {
+  gap: 0.55rem 0.75rem;
+}
+
+.card-head {
+  padding: 0.75rem 0.85rem 0.65rem;
+}
+
+.card-title-row {
+  margin-bottom: 0.5rem;
 }
 
 .tree-card.current-box {
