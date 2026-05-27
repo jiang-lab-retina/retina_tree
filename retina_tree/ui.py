@@ -17,6 +17,7 @@ from retina_tree.dataset_store import (
     load_working_dataset,
     save_working_dataset,
 )
+from retina_tree.search import PersonMatch, search_dataset
 from retina_tree.theme import APPLE_CSS
 
 
@@ -40,6 +41,8 @@ def init_session_state() -> None:
         "view_mode": "roots-only",
         "status_message": "Loading data…",
         "status_type": "info",
+        "search_query": "",
+        "search_focus_key": None,
     }
     for key, value in defaults.items():
         if key not in st.session_state:
@@ -152,10 +155,71 @@ def render_view_toolbar() -> None:
         st.page_link("pages/Edit_Data.py", label="Edit data", icon="✏️", use_container_width=True)
 
 
-def render_box_filter() -> str | None:
+def _match_option_label(match: PersonMatch) -> str:
+    pct = int(round(match.score * 100))
+    return f"{match.label} ({match.node_id}) · {match.box_title} · {pct}%"
+
+
+def render_person_search() -> tuple[str | None, str | None, set[str]]:
+    """
+    Search UI. Returns (filter_box_id, focus_node_id, highlight_node_ids) for the active box.
+    """
+    dataset = st.session_state.dataset
+    if not dataset:
+        return None, None, set()
+
+    st.markdown('<p class="apple-section-label">Search people</p>', unsafe_allow_html=True)
+
+    query = st.text_input(
+        "Search",
+        value=st.session_state.search_query,
+        placeholder="Name or ID — fuzzy match (e.g. Dowling, Wald, JED)",
+        label_visibility="collapsed",
+        key="person_search_input",
+    )
+    st.session_state.search_query = query
+
+    if not query.strip():
+        st.session_state.search_focus_key = None
+        return None, None, set()
+
+    matches = search_dataset(dataset, query)
+    if not matches:
+        st.caption("No matches. Try a shorter spelling or part of a name.")
+        return None, None, set()
+
+    options = [f"{m.box_id}|{m.node_id}" for m in matches]
+    labels = {opt: _match_option_label(m) for opt, m in zip(options, matches)}
+
+    if st.session_state.search_focus_key not in options:
+        st.session_state.search_focus_key = options[0]
+
+    selected_key = st.selectbox(
+        "Matches",
+        options=options,
+        index=options.index(st.session_state.search_focus_key),
+        format_func=lambda k: labels[k],
+        label_visibility="collapsed",
+    )
+    st.session_state.search_focus_key = selected_key
+
+    match = next(m for m in matches if f"{m.box_id}|{m.node_id}" == selected_key)
+    highlight_ids = {m.node_id for m in matches if m.box_id == match.box_id}
+
+    st.caption(
+        f"Showing **{match.label}** in *{match.box_title}* "
+        f"({len(matches)} fuzzy match{'es' if len(matches) != 1 else ''})."
+    )
+    return match.box_id, match.node_id, highlight_ids
+
+
+def render_box_filter(*, search_box_id: str | None = None) -> str | None:
     dataset = st.session_state.dataset
     if not dataset or not dataset.get("boxes"):
         return None
+
+    if search_box_id:
+        return search_box_id
 
     options = ["All trees", *[
         f"{box['title']} ({len(box['nodes'])} nodes)" for box in dataset["boxes"]

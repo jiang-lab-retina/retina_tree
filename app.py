@@ -11,6 +11,7 @@ from retina_tree.ui import (
     inject_apple_theme,
     render_box_filter,
     render_pending_badge,
+    render_person_search,
     render_status_banner,
     render_view_toolbar,
 )
@@ -37,7 +38,13 @@ def render_compact_header() -> None:
         st.page_link("pages/Admin_Review.py", label="Admin", icon="🛡️", use_container_width=True)
 
 
-def render_trees(filter_box_id: str | None = None) -> None:
+def render_trees(
+    filter_box_id: str | None = None,
+    *,
+    focus_node_id: str | None = None,
+    focus_box_id: str | None = None,
+    highlight_node_ids: set[str] | None = None,
+) -> None:
     dataset = st.session_state.dataset
     if not dataset or not dataset.get("boxes"):
         st.warning("No trees loaded.")
@@ -51,13 +58,16 @@ def render_trees(filter_box_id: str | None = None) -> None:
         boxes = [box for box in boxes if box["id"] == filter_box_id]
 
     for box in boxes:
+        box_focus = focus_node_id if focus_box_id and box["id"] == focus_box_id else None
+        box_highlights = highlight_node_ids if focus_box_id and box["id"] == focus_box_id else None
         card_html = render_tree_card_html(
             box,
             current_box_id=current_box_id,
             view_mode=view_mode,
             card_id=box["id"],
+            focus_node_id=box_focus,
+            highlight_node_ids=box_highlights,
         )
-        # Inline HTML: grows vertically and horizontally with the tree (no inner scrollbars).
         st.html(card_html, width="content", unsafe_allow_javascript=True)
 
 
@@ -68,8 +78,14 @@ def main() -> None:
 
     render_compact_header()
 
-    filter_box_id = render_box_filter()
-    render_trees(filter_box_id)
+    search_box_id, search_focus_id, search_highlights = render_person_search()
+    filter_box_id = render_box_filter(search_box_id=search_box_id)
+    render_trees(
+        filter_box_id,
+        focus_node_id=search_focus_id,
+        focus_box_id=search_box_id,
+        highlight_node_ids=search_highlights or None,
+    )
 
     render_view_toolbar()
     render_status_banner()

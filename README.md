@@ -20,8 +20,9 @@ On first run, `data/original_dataset.json` and `data/working_dataset.json` are c
 | **Original** | `data/original_dataset.json` | Last permanently accepted data |
 | **Live (working)** | `data/working_dataset.json` | What everyone sees; updated on each edit |
 
-1. Anyone opens **Edit data** and changes nodes or links → **live trees update right away**.
-2. **Admin review** compares original vs live, lists every difference, and offers:
+1. Use **Search people** on the home page (fuzzy name/ID match) to jump to someone in the tree — ancestors and descendants expand, match highlighted.
+2. Anyone opens **Edit data** and changes nodes or links → **live trees update right away**.
+3. **Admin review** compares original vs live, lists every difference, and offers:
    - **Accept all** — copy live → original (changes become permanent)
    - **Reject all** — copy original → live (undo unpublished edits)
 
