@@ -13,20 +13,56 @@ VIEWER_CSS_PATH = Path(__file__).resolve().parent / "viewer.css"
 
 # Scoped overrides when multiple cards share one Streamlit page (not isolated iframes).
 EMBED_LAYOUT_CSS = """
-.retina-tree-embed {
-  display: block;
+.retina-tree-embed-outer {
   width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
   margin: 0 0 1rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.retina-tree-embed {
+  display: inline-block;
+  width: max-content;
+  min-width: 100%;
+  margin: 0;
   overflow: visible;
+  vertical-align: top;
 }
 
 .retina-tree-embed .tree-card {
+  width: max-content;
+  min-width: 100%;
+  max-width: none;
+  overflow: visible;
+}
+
+.retina-tree-embed .card-head {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.retina-tree-embed .card-body,
+.retina-tree-embed .forest,
+.retina-tree-embed .tree,
+.retina-tree-embed .tree ul {
+  width: max-content;
+  max-width: none;
   overflow: visible;
 }
 
 .retina-tree-embed .card-body {
-  overflow: visible;
   max-height: none;
+}
+
+.retina-tree-embed .root-list,
+.retina-tree-embed .tree ul {
+  flex-wrap: nowrap;
+  justify-content: center;
+}
+
+.retina-tree-embed .tree-node {
+  flex-shrink: 0;
 }
 """
 
@@ -148,7 +184,8 @@ def render_tree_card_html(
 
     css = VIEWER_CSS_PATH.read_text(encoding="utf-8") + "\n" + APPLE_TREE_CSS + "\n" + EMBED_LAYOUT_CSS
 
-    return f"""<div class="retina-tree-embed">
+    return f"""<div class="retina-tree-embed-outer">
+<div class="retina-tree-embed">
 <style>{css}</style>
 <section class="tree-card{current_class}" id="{_escape(card_id)}"{size_attr}>
   <div class="card-head">
@@ -169,6 +206,7 @@ def render_tree_card_html(
   </div>
 </section>
 {_card_interaction_script(card_id)}
+</div>
 </div>"""
 
 

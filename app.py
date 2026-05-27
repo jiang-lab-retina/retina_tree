@@ -57,8 +57,8 @@ def render_trees(filter_box_id: str | None = None) -> None:
             view_mode=view_mode,
             card_id=box["id"],
         )
-        # st.html is not iframed — the page grows with the tree (no inner scrollbars).
-        st.html(card_html, unsafe_allow_javascript=True)
+        # Inline HTML: grows vertically and horizontally with the tree (no inner scrollbars).
+        st.html(card_html, width="content", unsafe_allow_javascript=True)
 
 
 def main() -> None:

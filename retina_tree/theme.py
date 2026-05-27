@@ -12,9 +12,16 @@ APPLE_CSS = """
   }
 
   .block-container {
-    max-width: 1200px;
+    max-width: 100%;
     padding-top: 1.25rem;
     padding-bottom: 3.5rem;
+  }
+
+  /* Let st.html tree blocks expand to content width */
+  div[data-testid="stHtml"],
+  div[data-testid="stHtml"] > div {
+    overflow-x: visible;
+    max-width: none;
   }
 
   h1, h2, h3 {
