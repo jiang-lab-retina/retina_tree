@@ -232,11 +232,10 @@ def render_box_filter(*, search_box_id: str | None = None) -> str | None:
     ]]
     box_ids = [None, *[box["id"] for box in dataset["boxes"]]]
 
-    default_index = 1 if len(options) > 1 else 0
     selected = st.selectbox(
         "Focus",
         options=range(len(options)),
-        index=default_index,
+        index=0,
         format_func=lambda i: options[i],
         label_visibility="collapsed",
         key="tree_focus_select",
