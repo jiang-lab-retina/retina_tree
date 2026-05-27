@@ -11,7 +11,7 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
-On startup the app loads `data/retina_trees_data.json` automatically.
+On startup the app loads `data/retina_trees_data.json` automatically and shows all lineage trees on the home page. Use **Edit data** (separate page) to modify nodes and links.
 
 ## Data format
 

@@ -6,6 +6,7 @@ import html
 from pathlib import Path
 
 from retina_tree.data_utils import derive_box
+from retina_tree.theme import APPLE_TREE_CSS
 
 VIEWER_CSS_PATH = Path(__file__).resolve().parent / "viewer.css"
 
@@ -84,7 +85,7 @@ def render_tree_card_html(
     current_class = " current-box" if is_current else ""
     size_attr = ' data-size="large"' if is_large else ""
 
-    css = VIEWER_CSS_PATH.read_text(encoding="utf-8")
+    css = VIEWER_CSS_PATH.read_text(encoding="utf-8") + "\n" + APPLE_TREE_CSS
 
     return f"""<!doctype html>
 <html lang="en">
