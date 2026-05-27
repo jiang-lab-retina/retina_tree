@@ -8,9 +8,6 @@ from pathlib import Path
 
 from rtree.data_utils import derive_box
 from rtree.search import focus_in_subtree
-from rtree.theme import APPLE_TREE_CSS
-
-VIEWER_CSS_PATH = Path(__file__).resolve().parent / "viewer.css"
 HORIZONTAL_TREE_CSS_PATH = Path(__file__).resolve().parent / "horizontal_tree.css"
 
 _embed_css_cache: str | None = None
@@ -86,15 +83,11 @@ EMBED_LAYOUT_CSS = """
 
 
 def get_embed_tree_css() -> str:
-    """Shared CSS for all tree cards (inject once per page)."""
+    """Self-contained tree CSS (scoped; no legacy viewer.css globals)."""
     global _embed_css_cache
     if _embed_css_cache is None:
         _embed_css_cache = (
-            VIEWER_CSS_PATH.read_text(encoding="utf-8")
-            + "\n"
-            + APPLE_TREE_CSS
-            + "\n"
-            + EMBED_LAYOUT_CSS
+            EMBED_LAYOUT_CSS
             + "\n"
             + HORIZONTAL_TREE_CSS_PATH.read_text(encoding="utf-8")
         )
@@ -325,6 +318,48 @@ def render_tree_card_html(
 {_card_interaction_script(card_id, effective_focus)}
 </div>
 </div>"""
+
+
+def render_trees_html(
+    boxes: list[dict],
+    *,
+    current_box_id: str | None = None,
+    view_mode: str = "roots-only",
+    focus_node_id: str | None = None,
+    focus_box_id: str | None = None,
+    highlight_node_ids: set[str] | None = None,
+) -> str:
+    """One st.html fragment: shared styles + all tree cards (works on Streamlit Cloud)."""
+    cards: list[str] = []
+    for box in boxes:
+        box_focus = focus_node_id if focus_box_id and box["id"] == focus_box_id else None
+        box_highlights = (
+            highlight_node_ids if focus_box_id and box["id"] == focus_box_id else None
+        )
+        cards.append(
+            render_tree_card_html(
+                box,
+                current_box_id=current_box_id,
+                view_mode=view_mode,
+                card_id=box["id"],
+                focus_node_id=box_focus,
+                highlight_node_ids=box_highlights,
+                include_styles=False,
+            )
+        )
+    return (
+        f'<div class="retina-trees-page">'
+        f"<style>{get_embed_tree_css()}</style>"
+        f'{"".join(cards)}'
+        f"</div>"
+    )
+
+
+def estimate_trees_height(boxes: list[dict], view_mode: str = "roots-only") -> int:
+    if not boxes:
+        return 120
+    total = sum(estimate_card_height(box, view_mode) for box in boxes)
+    return min(12000, total + 48)
 
 
 def estimate_card_height(box: dict, view_mode: str = "roots-only") -> int:

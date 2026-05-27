@@ -7,7 +7,7 @@ import site_setup  # noqa: F401
 import streamlit as st
 
 from rtree.streamlit_render import render_html_fragment, streamlit_supports_tree_html
-from rtree.tree_html import estimate_card_height, render_tree_card_html
+from rtree.tree_html import estimate_trees_height, render_trees_html
 from rtree.ui import (
     configure_page,
     ensure_dataset_loaded,
@@ -58,21 +58,18 @@ def render_trees(
             "Redeploy after upgrading `requirements.txt` on Streamlit Cloud."
         )
 
-    for box in boxes:
-        box_focus = focus_node_id if focus_box_id and box["id"] == focus_box_id else None
-        box_highlights = highlight_node_ids if focus_box_id and box["id"] == focus_box_id else None
-        card_html = render_tree_card_html(
-            box,
-            current_box_id=current_box_id,
-            view_mode=view_mode,
-            card_id=box["id"],
-            focus_node_id=box_focus,
-            highlight_node_ids=box_highlights,
-        )
-        render_html_fragment(
-            card_html,
-            height=estimate_card_height(box, view_mode),
-        )
+    trees_html = render_trees_html(
+        boxes,
+        current_box_id=current_box_id,
+        view_mode=view_mode,
+        focus_node_id=focus_node_id,
+        focus_box_id=focus_box_id,
+        highlight_node_ids=highlight_node_ids,
+    )
+    render_html_fragment(
+        trees_html,
+        height=estimate_trees_height(boxes, view_mode),
+    )
 
 
 def main() -> None:

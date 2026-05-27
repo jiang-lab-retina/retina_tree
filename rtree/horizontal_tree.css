@@ -161,8 +161,11 @@
 }
 
 .retina-tree-embed .node-button {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
   cursor: pointer;
-  gap: 0.3rem;
+  gap: 0.28rem;
 }
 
 .retina-tree-embed .node-button:hover {
@@ -189,6 +192,7 @@
 }
 
 .retina-tree-embed .shared-badge {
+  margin-left: 0.15rem;
   padding: 0.06rem 0.35rem;
   font-size: 0.62rem;
   font-weight: 600;
@@ -196,6 +200,75 @@
   color: #6e6e73;
   border-radius: 4px;
   letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* Card chrome (scoped; was in global APPLE_TREE_CSS) */
+.retina-tree-embed .tree-card {
+  background: #fcfcfd;
+  border: 1px solid #e5e5ea;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  height: fit-content;
+  width: 100%;
+  overflow: visible;
+  margin-bottom: 0.65rem;
+}
+
+.retina-tree-embed .tree-card.current-box {
+  border-color: #c5c5cc;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.retina-tree-embed .card-head {
+  padding: 0.55rem 0.65rem 0.45rem;
+  background: #f8f8f9;
+  border-bottom: 1px solid #ebebed;
+}
+
+.retina-tree-embed .card-title-row {
+  margin-bottom: 0.35rem;
+}
+
+.retina-tree-embed .card-title-row h2 {
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: #3a3a3c;
+  margin: 0;
+}
+
+.retina-tree-embed .card-title-row .meta {
+  font-size: 0.72rem;
+  color: #8e8e93;
+}
+
+.retina-tree-embed .card-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.retina-tree-embed .card-toolbar button {
+  border-radius: 6px;
+  border: 1px solid #e0e0e5;
+  background: #ffffff;
+  color: #5c5c61;
+  font-weight: 500;
+  font-size: 0.7rem;
+  padding: 0.22rem 0.5rem;
+  cursor: pointer;
+}
+
+.retina-tree-embed .card-toolbar button:hover {
+  background: #f4f4f6;
+  border-color: #d0d0d6;
+  color: #3a3a3c;
+}
+
+.retina-tree-embed .card-body {
+  padding: 0.35rem 0.5rem 0.45rem;
+  overflow: visible;
 }
 
 .retina-tree-embed .tree-node.collapsed > ul {

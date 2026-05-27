@@ -26,17 +26,8 @@ from rtree.branding import (
 )
 from rtree.streamlit_render import render_custom_html
 from rtree.theme import APPLE_CSS
-from rtree.tree_html import get_embed_tree_css
-
-
 def inject_apple_theme() -> None:
     st.markdown(APPLE_CSS, unsafe_allow_html=True)
-    if not st.session_state.get("_rt_tree_css_injected"):
-        st.markdown(
-            f"<style id='rt-embed-tree-css'>{get_embed_tree_css()}</style>",
-            unsafe_allow_html=True,
-        )
-        st.session_state._rt_tree_css_injected = True
 
 
 def configure_page(*, title: str, icon: str | None = None) -> None:
