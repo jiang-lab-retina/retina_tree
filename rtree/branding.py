@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import html
 from pathlib import Path
 
@@ -19,19 +20,18 @@ def logo_svg(*, size: int = 40, css_class: str = "rt-logo-svg") -> str:
     )
 
 
+def logo_img_html(*, size: int = 40) -> str:
+    """Data-URI img (st.html sanitizes inline SVG)."""
+    raw = LOGO_PATH.read_text(encoding="utf-8")
+    encoded = base64.b64encode(raw.encode("utf-8")).decode("ascii")
+    return (
+        f'<img class="rt-logo-img" src="data:image/svg+xml;base64,{encoded}" '
+        f'width="{size}" height="{size}" alt="" decoding="async" />'
+    )
+
+
 def brand_mark_html(*, size: int = 40) -> str:
-    return f'<span class="rt-logo-wrap" aria-hidden="true">{logo_svg(size=size)}</span>'
-
-
-def render_ambient_decor() -> str:
-    """Fixed background accents (call once per page via markdown)."""
-    return """
-    <div class="rt-ambient" aria-hidden="true">
-      <span class="rt-ambient-orb rt-ambient-orb--tr"></span>
-      <span class="rt-ambient-orb rt-ambient-orb--bl"></span>
-      <span class="rt-ambient-grid"></span>
-    </div>
-    """
+    return f'<span class="rt-logo-wrap" aria-hidden="true">{logo_img_html(size=size)}</span>'
 
 
 def render_brand_row(
@@ -73,7 +73,7 @@ def render_section_rule(*, label: str | None = None) -> str:
 def site_footer_html() -> str:
     return f"""
     <footer class="rt-site-footer" aria-hidden="true">
-      <span class="rt-footer-mark">{logo_svg(size=22)}</span>
+      <span class="rt-footer-mark">{logo_img_html(size=22)}</span>
       <span class="rt-footer-text">{html.escape(BRAND_NAME)}</span>
       <span class="rt-footer-dot"></span>
       <span class="rt-footer-muted">lineage trees</span>

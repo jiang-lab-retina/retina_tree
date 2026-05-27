@@ -20,17 +20,23 @@ from rtree.dataset_store import (
 from rtree.search import PersonMatch, search_dataset
 from rtree.branding import (
     LOGO_PATH,
-    render_ambient_decor,
     render_brand_row,
     render_section_rule,
     site_footer_html,
 )
+from rtree.streamlit_render import render_custom_html
 from rtree.theme import APPLE_CSS
+from rtree.tree_html import get_embed_tree_css
 
 
 def inject_apple_theme() -> None:
     st.markdown(APPLE_CSS, unsafe_allow_html=True)
-    st.markdown(render_ambient_decor(), unsafe_allow_html=True)
+    if not st.session_state.get("_rt_tree_css_injected"):
+        st.markdown(
+            f"<style id='rt-embed-tree-css'>{get_embed_tree_css()}</style>",
+            unsafe_allow_html=True,
+        )
+        st.session_state._rt_tree_css_injected = True
 
 
 def configure_page(*, title: str, icon: str | None = None) -> None:
@@ -44,7 +50,7 @@ def configure_page(*, title: str, icon: str | None = None) -> None:
 
 
 def render_site_footer() -> None:
-    st.markdown(site_footer_html(), unsafe_allow_html=True)
+    render_custom_html(site_footer_html())
 
 
 def init_session_state() -> None:
@@ -105,18 +111,14 @@ def render_status_banner() -> None:
     css_class = st.session_state.status_type
     if css_class == "info":
         css_class = "success"
-    st.markdown(
-        f'<div class="status-banner {css_class}">{message}</div>',
-        unsafe_allow_html=True,
-    )
+    render_custom_html(f'<div class="status-banner {css_class}">{message}</div>')
 
 
 def render_page_header(*, subtitle: str) -> None:
     dataset = st.session_state.dataset
     title = dataset["title"] if dataset else "Retina Trees"
-    st.markdown(
-        f'<div class="rt-hero-shell">{render_brand_row(title=title, subtitle=subtitle, show_tagline=False)}</div>',
-        unsafe_allow_html=True,
+    render_custom_html(
+        f'<div class="rt-hero-shell">{render_brand_row(title=title, subtitle=subtitle, show_tagline=False)}</div>'
     )
 
 
@@ -124,17 +126,15 @@ def render_home_header() -> None:
     """Logo + dataset title + nav links for the home page."""
     dataset = st.session_state.dataset
     title = dataset["title"] if dataset else "Retina Trees"
-    st.markdown(
-        f'<div class="rt-hero-shell">{render_brand_row(title=title, show_tagline=True)}</div>',
-        unsafe_allow_html=True,
+    render_custom_html(
+        f'<div class="rt-hero-shell">{render_brand_row(title=title, show_tagline=True)}</div>'
     )
 
 
 def render_pending_badge() -> None:
     if has_pending_changes():
-        st.markdown(
-            '<span class="apple-pill warn">Unpublished edits · admin review pending</span>',
-            unsafe_allow_html=True,
+        render_custom_html(
+            '<span class="apple-pill warn">Unpublished edits · admin review pending</span>'
         )
 
 
@@ -147,10 +147,7 @@ def render_view_toolbar() -> None:
             if has_pending_changes()
             else '<span class="apple-pill">Live</span>'
         )
-        st.markdown(
-            f'<div class="apple-toolbar"><span class="label">View</span>{pill}</div>',
-            unsafe_allow_html=True,
-        )
+        render_custom_html(f'<div class="apple-toolbar"><span class="label">View</span>{pill}</div>')
 
     with col_mode:
         mode_labels = ["Roots only", "Expand all", "Collapse all"]
@@ -186,7 +183,7 @@ def render_person_search() -> tuple[str | None, str | None, set[str]]:
     if not dataset:
         return None, None, set()
 
-    st.markdown(render_section_rule(label="Search"), unsafe_allow_html=True)
+    render_custom_html(render_section_rule(label="Search"))
 
     query = st.text_input(
         "Search",
@@ -244,11 +241,14 @@ def render_box_filter(*, search_box_id: str | None = None) -> str | None:
     ]]
     box_ids = [None, *[box["id"] for box in dataset["boxes"]]]
 
+    default_index = 1 if len(options) > 1 else 0
     selected = st.selectbox(
         "Focus",
         options=range(len(options)),
+        index=default_index,
         format_func=lambda i: options[i],
         label_visibility="collapsed",
+        key="tree_focus_select",
     )
     return box_ids[selected]
 
@@ -295,7 +295,7 @@ def render_editor_page() -> None:
 
     st.caption(f"{len(box['nodes'])} nodes · {len(box['links'])} links")
 
-    st.markdown(render_section_rule(label="Edit"), unsafe_allow_html=True)
+    render_custom_html(render_section_rule(label="Edit"))
     left, mid, right = st.columns(3)
 
     with left:

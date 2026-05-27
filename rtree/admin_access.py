@@ -6,6 +6,8 @@ import os
 
 import streamlit as st
 
+from rtree.streamlit_render import render_custom_html
+
 ENV_ADMIN_PASSWORD = "RETINA_TREE_ADMIN_PASSWORD"
 
 
@@ -35,14 +37,13 @@ def render_admin_access_gate() -> None:
     if st.session_state.get("admin_unlocked"):
         return
 
-    st.markdown(
+    render_custom_html(
         """
         <div class="apple-hero">
           <h1>Administrator access</h1>
           <p class="subtitle">Enter the admin password to review or publish changes.</p>
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
     with st.form("admin_unlock"):

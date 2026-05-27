@@ -7,7 +7,7 @@ import site_setup  # noqa: F401
 import streamlit as st
 
 from rtree.streamlit_render import render_html_fragment, streamlit_supports_tree_html
-from rtree.tree_html import estimate_card_height, get_embed_tree_css, render_tree_card_html
+from rtree.tree_html import estimate_card_height, render_tree_card_html
 from rtree.ui import (
     configure_page,
     ensure_dataset_loaded,
@@ -57,13 +57,6 @@ def render_trees(
             "Interactive trees need **Streamlit 1.52 or newer**. "
             "Redeploy after upgrading `requirements.txt` on Streamlit Cloud."
         )
-
-    if boxes and not st.session_state.get("_rt_tree_css_injected"):
-        st.markdown(
-            f"<style id='rt-embed-tree-css'>{get_embed_tree_css()}</style>",
-            unsafe_allow_html=True,
-        )
-        st.session_state._rt_tree_css_injected = True
 
     for box in boxes:
         box_focus = focus_node_id if focus_box_id and box["id"] == focus_box_id else None

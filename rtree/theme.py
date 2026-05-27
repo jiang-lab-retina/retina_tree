@@ -4,17 +4,65 @@ APPLE_CSS = """
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-  #MainMenu, footer, header { visibility: hidden; height: 0; }
-  .stApp {
-    background: #f2f2f4;
-    color: #3a3a3c;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", Inter, sans-serif;
+  #MainMenu, footer, [data-testid="stHeader"] {
+    visibility: hidden !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
   }
 
+  /* Always use light chrome (readable in system dark mode / Streamlit dark toggle) */
+  .stApp,
+  .stApp[data-theme="dark"],
+  .stApp[data-theme="light"] {
+    background: #f2f2f4 !important;
+    color: #3a3a3c !important;
+    color-scheme: light;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", Inter, sans-serif;
+    position: relative;
+    isolation: isolate;
+  }
+
+  [data-testid="stAppViewContainer"],
+  [data-testid="stMain"],
+  [data-testid="stMainBlockContainer"],
   .block-container {
+    position: relative;
+    z-index: 2;
+    background: transparent !important;
+  }
+
+  .block-container,
+  [data-testid="stMainBlockContainer"] {
     max-width: 100%;
     padding-top: 1.25rem;
     padding-bottom: 3.5rem;
+  }
+
+  /* Subtle background decor (behind content, no fixed HTML overlay) */
+  .stApp::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+    background:
+      radial-gradient(circle at 92% 8%, rgba(90, 125, 140, 0.12) 0%, transparent 42%),
+      radial-gradient(circle at 8% 92%, rgba(154, 154, 161, 0.08) 0%, transparent 40%),
+      #f2f2f4;
+  }
+
+  .stApp::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.22;
+    background-image: radial-gradient(circle, #c8c8ce 0.65px, transparent 0.65px);
+    background-size: 28px 28px;
+    mask-image: linear-gradient(180deg, rgba(0,0,0,0.45) 0%, transparent 50%);
+    -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,0.45) 0%, transparent 50%);
   }
 
   /* Let st.html tree blocks expand to content width */
@@ -192,54 +240,39 @@ APPLE_CSS = """
     border-radius: 10px;
   }
 
-  /* —— Branding & ambient decor —— */
-  .stApp {
+  /* Custom markdown blocks: force readable colors in dark Streamlit theme */
+  [data-testid="stMarkdownContainer"] .rt-brand-title,
+  [data-testid="stMarkdownContainer"] h1.rt-brand-title {
+    color: #1d1d1f !important;
+  }
+
+  [data-testid="stMarkdownContainer"] .rt-brand-eyebrow {
+    color: #86868b !important;
+  }
+
+  [data-testid="stMarkdownContainer"] .rt-brand-tagline,
+  [data-testid="stMarkdownContainer"] .rt-brand-subtitle {
+    color: #6e6e73 !important;
+  }
+
+  [data-testid="stMarkdownContainer"] .rt-section-rule {
+    color: #aeaeb2 !important;
+  }
+
+  div[data-testid="stHtml"] {
     position: relative;
+    z-index: 2;
+    min-height: 2rem;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
   }
 
-  .rt-ambient {
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-    overflow: hidden;
-  }
-
-  .rt-ambient-orb {
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(48px);
-  }
-
-  .rt-ambient-orb--tr {
-    top: -6rem;
-    right: -4rem;
-    width: 18rem;
-    height: 18rem;
-    background: radial-gradient(circle, rgba(90, 125, 140, 0.14) 0%, transparent 68%);
-  }
-
-  .rt-ambient-orb--bl {
-    bottom: -8rem;
-    left: -6rem;
-    width: 22rem;
-    height: 22rem;
-    background: radial-gradient(circle, rgba(154, 154, 161, 0.1) 0%, transparent 70%);
-  }
-
-  .rt-ambient-grid {
-    position: absolute;
-    inset: 0;
-    opacity: 0.28;
-    background-image: radial-gradient(circle, #c8c8ce 0.65px, transparent 0.65px);
-    background-size: 28px 28px;
-    mask-image: linear-gradient(180deg, rgba(0,0,0,0.5) 0%, transparent 55%);
-    -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,0.5) 0%, transparent 55%);
-  }
-
-  .block-container {
-    position: relative;
-    z-index: 1;
+  div[data-testid="stHtml"] .rt-logo-img {
+    display: block;
+    width: 100%;
+    height: 100%;
   }
 
   .rt-brand-row {
