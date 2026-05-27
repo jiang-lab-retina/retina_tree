@@ -1,14 +1,34 @@
-"""Render interactive tree cards as HTML for Streamlit components."""
+"""Render interactive tree cards as HTML fragments for st.html (no iframe scrollbars)."""
 
 from __future__ import annotations
 
 import html
+import json
 from pathlib import Path
 
 from retina_tree.data_utils import derive_box
 from retina_tree.theme import APPLE_TREE_CSS
 
 VIEWER_CSS_PATH = Path(__file__).resolve().parent / "viewer.css"
+
+# Scoped overrides when multiple cards share one Streamlit page (not isolated iframes).
+EMBED_LAYOUT_CSS = """
+.retina-tree-embed {
+  display: block;
+  width: 100%;
+  margin: 0 0 1rem;
+  overflow: visible;
+}
+
+.retina-tree-embed .tree-card {
+  overflow: visible;
+}
+
+.retina-tree-embed .card-body {
+  overflow: visible;
+  max-height: none;
+}
+"""
 
 
 def _escape(text: str) -> str:
@@ -26,7 +46,6 @@ def _render_node(
     label = box["labels"].get(node_id, node_id)
     is_shared = box["indegree"].get(node_id, 0) > 1
     has_cycle = node_id in path
-    next_path = set(path)
     depth_attr = f' data-depth="{depth}"'
 
     badge = '<span class="shared-badge">shared</span>' if is_shared else ""
@@ -39,7 +58,7 @@ def _render_node(
         expanded = "false" if should_collapse else "true"
 
         child_html = "".join(
-            _render_node(box, child_id, depth + 1, next_path | {node_id}, view_mode)
+            _render_node(box, child_id, depth + 1, path | {node_id}, view_mode)
             for child_id in children
         )
 
@@ -66,6 +85,48 @@ def _render_node(
     )
 
 
+def _card_interaction_script(card_id: str) -> str:
+    """Per-card expand/collapse; scoped by id (required when multiple trees on one page)."""
+    safe_id = json.dumps(card_id)
+    return f"""
+<script>
+(function() {{
+  const card = document.getElementById({safe_id});
+  if (!card) return;
+
+  function applyTreeMode(mode) {{
+    card.querySelectorAll(".tree-node.has-children").forEach((node) => {{
+      const depth = Number(node.dataset.depth || 0);
+      let collapse = false;
+      if (mode === "collapse-all") {{
+        collapse = true;
+      }} else if (mode === "roots-only") {{
+        collapse = depth > 0;
+      }}
+      node.classList.toggle("collapsed", collapse);
+      const button = node.querySelector(":scope > .node-row > .node-button");
+      if (button) {{
+        button.setAttribute("aria-expanded", String(!collapse));
+      }}
+    }});
+  }}
+
+  card.querySelectorAll(".card-toolbar button").forEach((button) => {{
+    button.addEventListener("click", () => applyTreeMode(button.dataset.mode));
+  }});
+
+  card.querySelectorAll(".node-button").forEach((button) => {{
+    button.addEventListener("click", () => {{
+      const node = button.closest(".tree-node");
+      const collapsed = node.classList.toggle("collapsed");
+      button.setAttribute("aria-expanded", String(!collapsed));
+    }});
+  }});
+}})();
+</script>
+"""
+
+
 def render_tree_card_html(
     box: dict,
     *,
@@ -85,134 +146,54 @@ def render_tree_card_html(
     current_class = " current-box" if is_current else ""
     size_attr = ' data-size="large"' if is_large else ""
 
-    css = VIEWER_CSS_PATH.read_text(encoding="utf-8") + "\n" + APPLE_TREE_CSS
+    css = VIEWER_CSS_PATH.read_text(encoding="utf-8") + "\n" + APPLE_TREE_CSS + "\n" + EMBED_LAYOUT_CSS
 
-    return f"""<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>{css}</style>
-</head>
-<body>
-  <section class="tree-card{current_class}" id="{_escape(card_id)}"{size_attr}>
-    <div class="card-head">
-      <div class="card-title-row">
-        <h2>{_escape(derived["title"])}</h2>
-        <div class="meta">{derived["node_count"]} nodes · {derived["edge_count"]} links</div>
-      </div>
-      <div class="card-toolbar">
-        <button type="button" data-mode="expand-all">Expand all</button>
-        <button type="button" data-mode="collapse-all">Collapse all</button>
-        <button type="button" data-mode="roots-only">Roots only</button>
-      </div>
+    return f"""<div class="retina-tree-embed">
+<style>{css}</style>
+<section class="tree-card{current_class}" id="{_escape(card_id)}"{size_attr}>
+  <div class="card-head">
+    <div class="card-title-row">
+      <h2>{_escape(derived["title"])}</h2>
+      <div class="meta">{derived["node_count"]} nodes · {derived["edge_count"]} links</div>
     </div>
-    <div class="card-body">
-      <div class="forest">
-        <ul class="tree root-list">{roots_html}</ul>
-      </div>
+    <div class="card-toolbar">
+      <button type="button" data-mode="expand-all">Expand all</button>
+      <button type="button" data-mode="collapse-all">Collapse all</button>
+      <button type="button" data-mode="roots-only">Roots only</button>
     </div>
-  </section>
-  <script>
-    const card = document.querySelector(".tree-card");
-
-    function measureContentHeight() {{
-      const doc = document.documentElement;
-      const body = document.body;
-      return Math.ceil(
-        Math.max(
-          doc.scrollHeight,
-          doc.offsetHeight,
-          body.scrollHeight,
-          body.offsetHeight,
-          card.scrollHeight,
-          card.offsetHeight
-        )
-      );
-    }}
-
-    function reportHeight() {{
-      const height = Math.max(measureContentHeight(), 120);
-      window.parent.postMessage({{ type: "streamlit:setFrameHeight", height }}, "*");
-    }}
-
-    function scheduleHeightReport() {{
-      reportHeight();
-      requestAnimationFrame(reportHeight);
-      requestAnimationFrame(() => requestAnimationFrame(reportHeight));
-      [50, 150, 350, 600].forEach((ms) => window.setTimeout(reportHeight, ms));
-    }}
-
-    function applyTreeMode(mode) {{
-      card.querySelectorAll(".tree-node.has-children").forEach((node) => {{
-        const depth = Number(node.dataset.depth || 0);
-        let collapse = false;
-        if (mode === "collapse-all") {{
-          collapse = true;
-        }} else if (mode === "roots-only") {{
-          collapse = depth > 0;
-        }}
-        node.classList.toggle("collapsed", collapse);
-        const button = node.querySelector(":scope > .node-row > .node-button");
-        if (button) {{
-          button.setAttribute("aria-expanded", String(!collapse));
-        }}
-      }});
-      scheduleHeightReport();
-    }}
-
-    card.querySelectorAll(".card-toolbar button").forEach((button) => {{
-      button.addEventListener("click", () => applyTreeMode(button.dataset.mode));
-    }});
-
-    card.querySelectorAll(".node-button").forEach((button) => {{
-      button.addEventListener("click", () => {{
-        const node = button.closest(".tree-node");
-        const collapsed = node.classList.toggle("collapsed");
-        button.setAttribute("aria-expanded", String(!collapsed));
-        scheduleHeightReport();
-      }});
-    }});
-
-    const forest = card.querySelector(".forest");
-    if (typeof ResizeObserver !== "undefined") {{
-      const observer = new ResizeObserver(scheduleHeightReport);
-      observer.observe(card);
-      if (forest) observer.observe(forest);
-    }}
-    scheduleHeightReport();
-    window.addEventListener("load", scheduleHeightReport);
-  </script>
-</body>
-</html>"""
+  </div>
+  <div class="card-body">
+    <div class="forest">
+      <ul class="tree root-list">{roots_html}</ul>
+    </div>
+  </div>
+</section>
+{_card_interaction_script(card_id)}
+</div>"""
 
 
-def _max_tree_depth(derived: dict, node_id: str, depth: int, path: set[str]) -> int:
+def estimate_card_height(box: dict, view_mode: str = "roots-only") -> int:
+    """Legacy helper if iframe embedding is used elsewhere."""
+    derived = derive_box(box)
+    header = 118
+    root_count = max(1, len(derived["roots"]))
+    if view_mode in ("roots-only", "collapse-all"):
+        rows = max(1, (root_count + 2) // 3)
+        return min(720, max(168, header + rows * 52 + 16))
+    depth = max(
+        (
+            _tree_depth(derived, root_id, 0, set())
+            for root_id in derived["roots"]
+        ),
+        default=0,
+    )
+    return min(4000, max(280, header + (depth + 1) * 72))
+
+
+def _tree_depth(derived: dict, node_id: str, depth: int, path: set[str]) -> int:
     if node_id in path:
         return depth
     children = derived["children"].get(node_id, [])
     if not children:
         return depth
-    return max(_max_tree_depth(derived, child, depth + 1, path | {node_id}) for child in children)
-
-
-def _tree_max_depth(derived: dict) -> int:
-    if not derived["roots"]:
-        return 0
-    return max(_max_tree_depth(derived, root_id, 0, set()) for root_id in derived["roots"])
-
-
-def estimate_card_height(box: dict, view_mode: str = "roots-only") -> int:
-    """Initial iframe height; embedded script resizes to match visible tree."""
-    derived = derive_box(box)
-    header = 118
-    root_count = max(1, len(derived["roots"]))
-
-    if view_mode in ("roots-only", "collapse-all"):
-        rows = max(1, (root_count + 2) // 3)
-        return min(720, max(168, header + rows * 52 + 16))
-
-    depth = _tree_max_depth(derived)
-    # Expanded tree grows vertically by depth (~72px per level) plus root band
-    expanded = header + (depth + 1) * 72 + root_count * 8
-    return min(2400, max(280, expanded))
+    return max(_tree_depth(derived, child, depth + 1, path | {node_id}) for child in children)

@@ -225,6 +225,7 @@ html, body {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
   height: fit-content;
   width: 100%;
+  overflow: visible;
 }
 
 .card-body {
