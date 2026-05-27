@@ -24,12 +24,11 @@ from rtree.ui import (
 
 def render_compact_header() -> None:
     render_home_header()
-    left, mid, right = st.columns([3, 1, 1])
-    with left:
-        render_pending_badge()
-    with mid:
+    render_pending_badge()
+    nav1, nav2 = st.columns(2)
+    with nav1:
         st.page_link("pages/Edit_Data.py", label="Edit data", icon="✏️", use_container_width=True)
-    with right:
+    with nav2:
         st.page_link("pages/Admin_Review.py", label="Admin", icon="🛡️", use_container_width=True)
 
 

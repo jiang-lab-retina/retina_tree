@@ -1,6 +1,11 @@
 """Apple-style design tokens and CSS for the app and embedded tree cards."""
 
-APPLE_CSS = """
+from pathlib import Path
+
+_RESPONSIVE_CSS = (Path(__file__).resolve().parent / "responsive.css").read_text(encoding="utf-8")
+
+APPLE_CSS = (
+    """
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
@@ -413,8 +418,12 @@ APPLE_CSS = """
   .rt-footer-muted {
     color: #c7c7cc;
   }
+"""
+    + _RESPONSIVE_CSS
+    + """
 </style>
 """
+)
 
 APPLE_TREE_CSS = """
 :root {

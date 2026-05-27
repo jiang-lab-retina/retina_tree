@@ -9,6 +9,7 @@ from pathlib import Path
 from rtree.data_utils import derive_box
 from rtree.search import focus_in_subtree
 HORIZONTAL_TREE_CSS_PATH = Path(__file__).resolve().parent / "horizontal_tree.css"
+RESPONSIVE_CSS_PATH = Path(__file__).resolve().parent / "responsive.css"
 
 _embed_css_cache: str | None = None
 
@@ -90,6 +91,8 @@ def get_embed_tree_css() -> str:
             EMBED_LAYOUT_CSS
             + "\n"
             + HORIZONTAL_TREE_CSS_PATH.read_text(encoding="utf-8")
+            + "\n"
+            + RESPONSIVE_CSS_PATH.read_text(encoding="utf-8")
         )
     return _embed_css_cache
 
@@ -350,6 +353,7 @@ def render_trees_html(
     return (
         f'<div class="retina-trees-page">'
         f"<style>{get_embed_tree_css()}</style>"
+        f'<p class="rt-scroll-hint" aria-hidden="true">Swipe or scroll sideways to explore branches →</p>'
         f'{"".join(cards)}'
         f"</div>"
     )

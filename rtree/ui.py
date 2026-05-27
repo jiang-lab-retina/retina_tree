@@ -130,35 +130,28 @@ def render_pending_badge() -> None:
 
 
 def render_view_toolbar() -> None:
-    col_label, col_mode, col_edit = st.columns([1.2, 2.2, 1.2])
+    pill = (
+        '<span class="apple-pill warn">Live + pending</span>'
+        if has_pending_changes()
+        else '<span class="apple-pill">Live</span>'
+    )
+    render_custom_html(f'<div class="apple-toolbar"><span class="label">View</span>{pill}</div>')
 
-    with col_label:
-        pill = (
-            '<span class="apple-pill warn">Live + pending</span>'
-            if has_pending_changes()
-            else '<span class="apple-pill">Live</span>'
-        )
-        render_custom_html(f'<div class="apple-toolbar"><span class="label">View</span>{pill}</div>')
-
-    with col_mode:
-        mode_labels = ["Roots only", "Expand all", "Collapse all"]
-        mode_keys = ["roots-only", "expand-all", "collapse-all"]
-        current_index = mode_keys.index(st.session_state.view_mode) if st.session_state.view_mode in mode_keys else 0
-        mode = st.radio(
-            "View",
-            options=mode_labels,
-            index=current_index,
-            horizontal=True,
-            label_visibility="collapsed",
-        )
-        mapping = dict(zip(mode_labels, mode_keys))
-        new_mode = mapping[mode]
-        if new_mode != st.session_state.view_mode:
-            st.session_state.view_mode = new_mode
-            st.rerun()
-
-    with col_edit:
-        st.page_link("pages/Edit_Data.py", label="Edit data", icon="✏️", use_container_width=True)
+    mode_labels = ["Roots only", "Expand all", "Collapse all"]
+    mode_keys = ["roots-only", "expand-all", "collapse-all"]
+    current_index = mode_keys.index(st.session_state.view_mode) if st.session_state.view_mode in mode_keys else 0
+    mode = st.radio(
+        "View",
+        options=mode_labels,
+        index=current_index,
+        horizontal=True,
+        label_visibility="collapsed",
+    )
+    mapping = dict(zip(mode_labels, mode_keys))
+    new_mode = mapping[mode]
+    if new_mode != st.session_state.view_mode:
+        st.session_state.view_mode = new_mode
+        st.rerun()
 
 
 def _match_option_label(match: PersonMatch) -> str:
