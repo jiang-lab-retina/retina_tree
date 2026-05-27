@@ -25,7 +25,18 @@ On first run, `data/original_dataset.json` and `data/working_dataset.json` are c
    - **Accept all** — copy live → original (changes become permanent)
    - **Reject all** — copy original → live (undo unpublished edits)
 
-Optional: set `app.admin_password` in `.streamlit/secrets.toml` to lock the admin page (see `.streamlit/secrets.toml.example`).
+Optional: protect **Admin review** with a password (see [Security](#security) below).
+
+## Security
+
+**Do not commit `.streamlit/secrets.toml` to GitHub.** Only `secrets.toml.example` (placeholders) belongs in the repo.
+
+| Where you run the app | How to set the admin password |
+|-----------------------|-------------------------------|
+| **Local** | `export RETINA_TREE_ADMIN_PASSWORD='…'` then `streamlit run app.py` |
+| **Streamlit Cloud** | App **Settings → Secrets** — paste `[app]` / `admin_password` there |
+
+Full details: [SECURITY.md](SECURITY.md)
 
 ## Data format
 
@@ -43,7 +54,7 @@ Each dataset file contains:
 1. Push this repository to GitHub.
 2. Connect the repo at [share.streamlit.io](https://share.streamlit.io).
 3. Set **Main file path** to `app.py`.
-4. Optionally add `admin_password` under `[app]` in Secrets.
+4. In **Settings → Secrets**, add `admin_password` under `[app]` (do not commit this to GitHub).
 
 **Note:** `original_dataset.json` and `working_dataset.json` live on the app filesystem and may reset on redeploy unless you use persistent storage.
 

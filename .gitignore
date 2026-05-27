@@ -2,14 +2,18 @@ __pycache__/
 *.py[cod]
 *$py.class
 .Python
-.env
 .venv/
 venv/
 ENV/
 .idea/
 .vscode/
 .DS_Store
+# Never commit real credentials (use env var or Streamlit Cloud Secrets UI)
 .streamlit/secrets.toml
+**/.streamlit/secrets.toml
+.env
+.env.*
+!.env.example
 data/proposals.db
 data/approved_dataset.json
 data/original_dataset.json

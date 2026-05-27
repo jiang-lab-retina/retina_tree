@@ -2,21 +2,19 @@
 
 from __future__ import annotations
 
+import os
+
 import streamlit as st
 
-
-def admin_password_configured() -> bool:
-    try:
-        app_cfg = st.secrets.get("app", {})
-        if isinstance(app_cfg, dict):
-            password = app_cfg.get("admin_password", "")
-            return bool(str(password).strip())
-    except (FileNotFoundError, AttributeError, KeyError):
-        pass
-    return False
+ENV_ADMIN_PASSWORD = "RETINA_TREE_ADMIN_PASSWORD"
 
 
 def get_admin_password() -> str:
+    """Password from environment (preferred) or Streamlit secrets — never from the repo."""
+    env_password = os.environ.get(ENV_ADMIN_PASSWORD, "").strip()
+    if env_password:
+        return env_password
+
     try:
         app_cfg = st.secrets.get("app", {})
         if isinstance(app_cfg, dict):
@@ -24,6 +22,10 @@ def get_admin_password() -> str:
     except (FileNotFoundError, AttributeError, KeyError):
         pass
     return ""
+
+
+def admin_password_configured() -> bool:
+    return bool(get_admin_password())
 
 
 def render_admin_access_gate() -> None:
