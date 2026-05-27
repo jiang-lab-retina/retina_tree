@@ -6,15 +6,21 @@ import json
 
 import streamlit as st
 
+from retina_tree.auth import (
+    current_user_email,
+    is_admin,
+    render_account_bar,
+    render_login_gate,
+    submit_edit_proposal,
+)
 from retina_tree.data_utils import (
-    DEFAULT_JSON_PATH,
     get_current_box,
-    load_dataset_from_path,
-    load_dataset_from_text,
     serialize_dataset,
     slugify_id,
-    unique_node_id,
 )
+from retina_tree.dataset_store import load_approved_dataset
+from retina_tree.proposal_apply import build_summary
+from retina_tree.proposals_db import list_proposals
 from retina_tree.theme import APPLE_CSS
 
 
@@ -35,8 +41,7 @@ def init_session_state() -> None:
     defaults = {
         "dataset": None,
         "current_box_id": None,
-        "source_name": str(DEFAULT_JSON_PATH.name),
-        "dirty": False,
+        "source_name": "approved_dataset.json",
         "view_mode": "roots-only",
         "status_message": "Loading data…",
         "status_type": "info",
@@ -49,7 +54,7 @@ def init_session_state() -> None:
 def ensure_dataset_loaded() -> None:
     init_session_state()
     if st.session_state.dataset is None:
-        load_default_dataset()
+        reload_approved_dataset()
 
 
 def set_status(message: str, status_type: str = "info") -> None:
@@ -57,34 +62,27 @@ def set_status(message: str, status_type: str = "info") -> None:
     st.session_state.status_type = status_type
 
 
-def load_default_dataset() -> None:
+def reload_approved_dataset() -> None:
     try:
-        dataset = load_dataset_from_path(DEFAULT_JSON_PATH)
+        dataset = load_approved_dataset()
         st.session_state.dataset = dataset
         st.session_state.current_box_id = dataset["boxes"][0]["id"] if dataset["boxes"] else None
-        st.session_state.source_name = DEFAULT_JSON_PATH.name
-        st.session_state.dirty = False
+        st.session_state.source_name = "approved_dataset.json"
         box_count = len(dataset["boxes"])
         set_status(
-            f"Loaded {box_count} tree{'s' if box_count != 1 else ''} from {DEFAULT_JSON_PATH.name}.",
+            f"Showing {box_count} approved tree{'s' if box_count != 1 else ''}.",
             "success",
         )
     except FileNotFoundError:
-        set_status(f"Default JSON not found at {DEFAULT_JSON_PATH}.", "error")
+        set_status("Approved dataset file not found.", "error")
     except json.JSONDecodeError as exc:
-        set_status(f"Invalid JSON in default file: {exc}", "error")
+        set_status(f"Invalid approved JSON: {exc}", "error")
     except OSError as exc:
-        set_status(f"Could not read default JSON: {exc}", "error")
-
-
-def mark_dirty(message: str) -> None:
-    st.session_state.dirty = True
-    set_status(message, "warning")
+        set_status(f"Could not load approved dataset: {exc}", "error")
 
 
 def render_status_banner() -> None:
-    suffix = " · Unsaved changes" if st.session_state.dirty else ""
-    message = f"{st.session_state.status_message}{suffix}"
+    message = st.session_state.status_message
     css_class = st.session_state.status_type
     if css_class == "info":
         css_class = "success"
@@ -109,17 +107,12 @@ def render_page_header(*, subtitle: str) -> None:
 
 
 def render_view_toolbar() -> None:
-    """Segmented view controls for the home page."""
     col_label, col_mode, col_edit = st.columns([1.2, 2.2, 1.2])
 
     with col_label:
-        dirty_pill = (
-            '<span class="apple-pill warn">Unsaved</span>'
-            if st.session_state.dirty
-            else f'<span class="apple-pill">{st.session_state.source_name}</span>'
-        )
         st.markdown(
-            f'<div class="apple-toolbar"><span class="label">Source</span>{dirty_pill}</div>',
+            f'<div class="apple-toolbar"><span class="label">Dataset</span>'
+            f'<span class="apple-pill">Approved</span></div>',
             unsafe_allow_html=True,
         )
 
@@ -141,7 +134,7 @@ def render_view_toolbar() -> None:
             st.rerun()
 
     with col_edit:
-        st.page_link("pages/Edit_Data.py", label="Edit data", icon="✏️", use_container_width=True)
+        st.page_link("pages/Edit_Data.py", label="Propose edit", icon="✏️", use_container_width=True)
 
 
 def render_box_filter() -> str | None:
@@ -163,10 +156,56 @@ def render_box_filter() -> str | None:
     return box_ids[selected]
 
 
+def _submit_and_notify(action: str, box: dict, payload: dict) -> None:
+    summary = build_summary(action, payload, box["title"])
+    try:
+        proposal_id = submit_edit_proposal(
+            action=action,
+            box_id=box["id"],
+            box_title=box["title"],
+            payload=payload,
+            summary=summary,
+        )
+        set_status(
+            f"Submitted for review (id {proposal_id[:8]}…). An administrator will approve or reject it.",
+            "success",
+        )
+    except Exception as exc:
+        set_status(f"Could not submit proposal: {exc}", "error")
+
+
+def render_user_proposals_table() -> None:
+    email = current_user_email()
+    if not email:
+        return
+
+    proposals = list_proposals(user_email=email, limit=50)
+    if not proposals:
+        st.caption("You have not submitted any edits yet.")
+        return
+
+    st.markdown('<p class="apple-section-label">Your submissions</p>', unsafe_allow_html=True)
+    rows = []
+    for p in proposals:
+        rows.append(
+            {
+                "When": p["created_at"][:19].replace("T", " "),
+                "Status": p["status"],
+                "Change": p["summary"],
+                "Review note": p.get("review_note") or "—",
+            }
+        )
+    st.dataframe(rows, use_container_width=True, hide_index=True)
+
+
 def render_editor_page() -> None:
+    render_login_gate(
+        message="Sign in with Google to propose changes. Edits are tracked and require administrator approval before they appear on the public trees."
+    )
+
     dataset = st.session_state.dataset
     if not dataset or not dataset.get("boxes"):
-        st.info("No data loaded. Return to the viewer or reload the default JSON.")
+        st.info("No data loaded.")
         return
 
     boxes = dataset["boxes"]
@@ -180,52 +219,15 @@ def render_editor_page() -> None:
     with top_left:
         st.page_link("app.py", label="← Back to trees", icon="🌳")
     with top_right:
-        st.download_button(
-            "Download JSON",
-            data=serialize_dataset(dataset),
-            file_name="retina_trees_data.json",
-            mime="application/json",
-            use_container_width=True,
-        )
+        if is_admin():
+            st.page_link("pages/Admin_Review.py", label="Admin review", icon="🛡️", use_container_width=True)
 
-    st.markdown('<p class="apple-section-label">Dataset</p>', unsafe_allow_html=True)
-    with st.container():
-        c1, c2, c3 = st.columns(3)
-        with c1:
-            if st.button("Reload default", use_container_width=True, type="secondary"):
-                load_default_dataset()
-                st.rerun()
-        with c2:
-            if st.button(
-                "Discard edits",
-                use_container_width=True,
-                type="secondary",
-                disabled=not st.session_state.dirty,
-            ):
-                load_default_dataset()
-                st.rerun()
-        with c3:
-            uploaded = st.file_uploader(
-                "Upload JSON",
-                type=["json"],
-                label_visibility="collapsed",
-            )
-        if uploaded is not None:
-            try:
-                text = uploaded.getvalue().decode("utf-8")
-                new_dataset = load_dataset_from_text(text)
-                st.session_state.dataset = new_dataset
-                st.session_state.current_box_id = (
-                    new_dataset["boxes"][0]["id"] if new_dataset["boxes"] else None
-                )
-                st.session_state.source_name = uploaded.name
-                st.session_state.dirty = False
-                set_status(f"Loaded {len(new_dataset['boxes'])} trees from {uploaded.name}.", "success")
-                st.rerun()
-            except json.JSONDecodeError as exc:
-                set_status(f"Invalid JSON file: {exc}", "error")
+    st.info(
+        "The trees on the home page show **approved** data only. Your changes below are saved as "
+        "**proposals** and will not appear publicly until an administrator approves them."
+    )
 
-    render_status_banner()
+    render_account_bar()
 
     box_labels = {item["id"]: item["title"] for item in boxes}
     selected_box_id = st.selectbox(
@@ -242,28 +244,29 @@ def render_editor_page() -> None:
     if box is None:
         return
 
-    st.caption(f"{len(box['nodes'])} nodes · {len(box['links'])} links")
+    st.caption(f"{len(box['nodes'])} nodes · {len(box['links'])} links (approved snapshot)")
 
-    st.markdown('<p class="apple-section-label">Nodes & links</p>', unsafe_allow_html=True)
+    st.markdown('<p class="apple-section-label">Propose changes</p>', unsafe_allow_html=True)
     left, mid, right = st.columns(3)
 
     with left:
         st.markdown("### Add node")
         add_node_id = st.text_input("Node ID", placeholder="Auto from label if empty", key="add_id")
         add_node_label = st.text_input("Label", placeholder="Display name", key="add_label")
-        if st.button("Add node", use_container_width=True, key="add_btn"):
+        if st.button("Submit add node", use_container_width=True, key="add_btn"):
             label = add_node_label.strip()
             if not label:
-                set_status("Enter a node label before adding.", "error")
+                set_status("Enter a node label before submitting.", "error")
             else:
-                requested_id = add_node_id.strip() or slugify_id(label)
-                node_id = unique_node_id(box, requested_id)
-                box["nodes"].append({"id": node_id, "label": label})
-                mark_dirty(f"Added node {node_id}.")
+                payload = {
+                    "label": label,
+                    "node_id": add_node_id.strip() or slugify_id(label),
+                }
+                _submit_and_notify("add_node", box, payload)
                 st.rerun()
 
     with mid:
-        st.markdown("### Edit node")
+        st.markdown("### Edit node label")
         if not box["nodes"]:
             st.caption("No nodes in this box.")
         else:
@@ -275,27 +278,22 @@ def render_editor_page() -> None:
                 key="edit_node_sel",
             )
             active_node = next(n for n in box["nodes"] if n["id"] == selected_node_id)
-            new_label = st.text_input("Label", value=active_node["label"], key="edit_label")
-            b1, b2 = st.columns(2)
-            with b1:
-                if st.button("Save", use_container_width=True, key="save_label"):
-                    cleaned = new_label.strip()
-                    if not cleaned:
-                        set_status("Label cannot be empty.", "error")
-                    else:
-                        active_node["label"] = cleaned
-                        mark_dirty(f"Updated {active_node['id']}.")
-                        st.rerun()
-            with b2:
-                if st.button("Delete", use_container_width=True, type="secondary", key="del_node"):
-                    box["nodes"] = [n for n in box["nodes"] if n["id"] != selected_node_id]
-                    box["links"] = [
-                        link
-                        for link in box["links"]
-                        if link["parent"] != selected_node_id and link["child"] != selected_node_id
-                    ]
-                    mark_dirty(f"Deleted {selected_node_id}.")
+            new_label = st.text_input("New label", value=active_node["label"], key="edit_label")
+            if st.button("Submit label change", use_container_width=True, key="save_label"):
+                cleaned = new_label.strip()
+                if not cleaned:
+                    set_status("Label cannot be empty.", "error")
+                elif cleaned == active_node["label"]:
+                    set_status("Label is unchanged.", "warning")
+                else:
+                    payload = {"node_id": selected_node_id, "label": cleaned}
+                    _submit_and_notify("update_node", box, payload)
                     st.rerun()
+
+            if st.button("Submit delete node", use_container_width=True, type="secondary", key="del_node"):
+                payload = {"node_id": selected_node_id}
+                _submit_and_notify("delete_node", box, payload)
+                st.rerun()
 
     with right:
         st.markdown("### Links")
@@ -315,16 +313,16 @@ def render_editor_page() -> None:
                 format_func=lambda nid: node_options[nid],
                 key="link_child",
             )
-            if st.button("Add link", use_container_width=True, key="add_link"):
+            if st.button("Submit add link", use_container_width=True, key="add_link"):
                 if parent_id == child_id:
                     set_status("Parent and child must differ.", "error")
                 elif any(
                     link["parent"] == parent_id and link["child"] == child_id for link in box["links"]
                 ):
-                    set_status("Link already exists.", "error")
+                    set_status("Link already exists in approved data.", "error")
                 else:
-                    box["links"].append({"parent": parent_id, "child": child_id})
-                    mark_dirty("Added link.")
+                    payload = {"parent": parent_id, "child": child_id}
+                    _submit_and_notify("add_link", box, payload)
                     st.rerun()
 
             link_labels = {
@@ -335,16 +333,15 @@ def render_editor_page() -> None:
                 for link in box["links"]
             }
             if link_labels:
-                selected_link = st.selectbox("Existing", options=list(link_labels.keys()), key="link_sel")
-                if st.button("Delete link", use_container_width=True, type="secondary", key="del_link"):
+                selected_link = st.selectbox("Existing link", options=list(link_labels.keys()), key="link_sel")
+                if st.button("Submit delete link", use_container_width=True, type="secondary", key="del_link"):
                     parent, child = selected_link.split("->", 1)
-                    box["links"] = [
-                        link
-                        for link in box["links"]
-                        if not (link["parent"] == parent and link["child"] == child)
-                    ]
-                    mark_dirty("Deleted link.")
+                    payload = {"parent": parent, "child": child}
+                    _submit_and_notify("delete_link", box, payload)
                     st.rerun()
 
-    st.markdown('<p class="apple-section-label">JSON preview</p>', unsafe_allow_html=True)
-    st.code(serialize_dataset(dataset), language="json")
+    render_status_banner()
+    render_user_proposals_table()
+
+    with st.expander("Approved JSON snapshot (read-only)"):
+        st.code(serialize_dataset(dataset), language="json")

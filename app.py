@@ -1,10 +1,11 @@
-"""Home page: view retina lineage trees (Apple-style, trees first)."""
+"""Home page: view approved retina lineage trees."""
 
 from __future__ import annotations
 
 import streamlit as st
 import streamlit.components.v1 as components
 
+from retina_tree.auth import is_admin, render_account_bar
 from retina_tree.tree_html import estimate_card_height, render_tree_card_html
 from retina_tree.ui import (
     configure_page,
@@ -20,7 +21,7 @@ def render_compact_header() -> None:
     dataset = st.session_state.dataset
     title = dataset["title"] if dataset else "Retina Trees"
 
-    left, right = st.columns([4, 1])
+    left, mid, right = st.columns([3, 1, 1])
     with left:
         st.markdown(
             f"""
@@ -30,8 +31,13 @@ def render_compact_header() -> None:
             """,
             unsafe_allow_html=True,
         )
+    with mid:
+        st.page_link("pages/Edit_Data.py", label="Propose edit", icon="✏️", use_container_width=True)
     with right:
-        st.page_link("pages/Edit_Data.py", label="Edit data", icon="✏️", use_container_width=True)
+        if is_admin():
+            st.page_link("pages/Admin_Review.py", label="Admin", icon="🛡️", use_container_width=True)
+
+    render_account_bar()
 
 
 def render_trees(filter_box_id: str | None = None) -> None:

@@ -10,3 +10,5 @@ ENV/
 .vscode/
 .DS_Store
 .streamlit/secrets.toml
+data/proposals.db
+data/approved_dataset.json
