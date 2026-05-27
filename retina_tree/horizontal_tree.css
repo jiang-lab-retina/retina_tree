@@ -1,0 +1,127 @@
+/* Left-to-right tree layout (overrides vertical viewer.css inside .retina-tree-embed) */
+
+.retina-tree-embed .forest {
+  min-width: max-content;
+}
+
+.retina-tree-embed .tree,
+.retina-tree-embed .tree ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Children branch to the right of each node */
+.retina-tree-embed .tree ul {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  margin: 0;
+  padding: 0 0 0 1.35rem;
+  flex-wrap: nowrap;
+}
+
+/* Vertical spine connecting sibling branches (between first and last child centers) */
+.retina-tree-embed .tree ul::before {
+  content: "";
+  position: absolute;
+  top: 1.15rem;
+  bottom: 1.15rem;
+  left: 0;
+  width: 0;
+  border-left: 1px solid var(--branch);
+}
+
+.retina-tree-embed .tree-node {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 0.28rem 0;
+  min-width: 0;
+}
+
+/* Horizontal branch from spine to node */
+.retina-tree-embed .tree-node::before,
+.retina-tree-embed .tree-node::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 1.05rem;
+  height: 0;
+  border-top: 1px solid var(--branch);
+  border-left: none;
+  transform: translateY(-50%);
+}
+
+.retina-tree-embed .tree-node::before {
+  left: -1.05rem;
+  right: auto;
+}
+
+.retina-tree-embed .tree-node::after {
+  display: none;
+}
+
+.retina-tree-embed .tree-node:only-child::before {
+  display: block;
+  left: -1.05rem;
+}
+
+.retina-tree-embed .tree-node:first-child::before {
+  border-top-left-radius: 0.85rem;
+}
+
+.retina-tree-embed .tree-node:last-child::before {
+  border-bottom-left-radius: 0.85rem;
+}
+
+/* Single root / top-level nodes without incoming branch */
+.retina-tree-embed .root-list {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 0.85rem 0;
+  flex-wrap: nowrap;
+}
+
+.retina-tree-embed .root-list::before {
+  display: none;
+}
+
+.retina-tree-embed .root-list > .tree-node {
+  padding: 0;
+}
+
+.retina-tree-embed .root-list > .tree-node::before,
+.retina-tree-embed .root-list > .tree-node::after {
+  display: none;
+}
+
+.retina-tree-embed .node-row {
+  flex: 0 0 auto;
+  z-index: 1;
+}
+
+.retina-tree-embed .node-button,
+.retina-tree-embed .node-leaf {
+  max-width: 14rem;
+}
+
+/* Caret points right (expand reveals children to the right) */
+.retina-tree-embed .caret {
+  display: inline-block;
+  transform: rotate(0deg);
+}
+
+.retina-tree-embed .tree-node.collapsed > .node-row .caret {
+  transform: rotate(0deg);
+}
+
+.retina-tree-embed .tree-node.collapsed > ul {
+  display: none;
+}

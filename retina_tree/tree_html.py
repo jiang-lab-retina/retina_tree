@@ -11,6 +11,7 @@ from retina_tree.search import focus_in_subtree
 from retina_tree.theme import APPLE_TREE_CSS
 
 VIEWER_CSS_PATH = Path(__file__).resolve().parent / "viewer.css"
+HORIZONTAL_TREE_CSS_PATH = Path(__file__).resolve().parent / "horizontal_tree.css"
 
 # Scoped overrides when multiple cards share one Streamlit page (not isolated iframes).
 EMBED_LAYOUT_CSS = """
@@ -54,12 +55,6 @@ EMBED_LAYOUT_CSS = """
 
 .retina-tree-embed .card-body {
   max-height: none;
-}
-
-.retina-tree-embed .root-list,
-.retina-tree-embed .tree ul {
-  flex-wrap: nowrap;
-  justify-content: center;
 }
 
 .retina-tree-embed .tree-node {
@@ -170,7 +165,7 @@ def _render_node(
             f'<li class="tree-node has-children{collapsed_class}{search_classes}"{depth_attr}>'
             f'<div class="node-row">'
             f'<button type="button" class="node-button" aria-expanded="{expanded}">'
-            f'<span class="caret">▾</span>'
+            f'<span class="caret">▶</span>'
             f'<span class="node-text">{display_label}</span>{badge}'
             f"</button></div>"
             f"<ul>{child_html}</ul>"
@@ -283,7 +278,15 @@ def render_tree_card_html(
     current_class = " current-box" if is_current else ""
     size_attr = ' data-size="large"' if is_large else ""
 
-    css = VIEWER_CSS_PATH.read_text(encoding="utf-8") + "\n" + APPLE_TREE_CSS + "\n" + EMBED_LAYOUT_CSS
+    css = (
+        VIEWER_CSS_PATH.read_text(encoding="utf-8")
+        + "\n"
+        + APPLE_TREE_CSS
+        + "\n"
+        + EMBED_LAYOUT_CSS
+        + "\n"
+        + HORIZONTAL_TREE_CSS_PATH.read_text(encoding="utf-8")
+    )
 
     return f"""<div class="retina-tree-embed-outer">
 <div class="retina-tree-embed">
