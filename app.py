@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import site_setup  # noqa: F401
 
+from pathlib import Path
+
 import streamlit as st
 
 from rtree.streamlit_render import render_html_fragment, streamlit_supports_tree_html
-from rtree.tree_component import editable_tree_component
 from rtree.tree_html import estimate_trees_height, render_trees_html
 from rtree.ui import (
     configure_page,
@@ -26,6 +27,8 @@ from rtree.ui import (
     set_status,
 )
 
+_POSTER_PATH = Path(__file__).parent / "FASEB Poster 2026-6-10.pdf"
+
 
 def render_home_nav() -> None:
     render_pending_badge()
@@ -34,6 +37,21 @@ def render_home_nav() -> None:
         st.page_link("pages/Edit_Data.py", label="Edit dataset", icon="✏️", use_container_width=True)
     with nav2:
         st.page_link("pages/Admin_Review.py", label="Admin", icon="🛡️", use_container_width=True)
+
+
+def render_poster_download() -> None:
+    """Download button for the FASEB 2026 poster PDF, shown below the hero."""
+    if not _POSTER_PATH.exists():
+        return
+    _, col, _ = st.columns([1, 2, 1])
+    with col:
+        st.download_button(
+            label="📄 Poster at FASEB 2026",
+            data=_POSTER_PATH.read_bytes(),
+            file_name="FASEB_Poster_2026-6-10.pdf",
+            mime="application/pdf",
+            use_container_width=True,
+        )
 
 
 def _apply_inline_edit(box_id: str, node_id: str, new_label: str) -> None:
@@ -92,15 +110,21 @@ def render_trees(
 
     edit_mode = st.session_state.get("inline_edit_active", False)
     if edit_mode:
-        result = editable_tree_component(
-            trees_html,
-            edit_mode=True,
-            tree_height=height,
-            key="editable_tree",
-        )
-        if result and result.get("action") == "save":
-            _apply_inline_edit(result["boxId"], result["nodeId"], result["newLabel"])
-            st.rerun()
+        # Lazy import so a missing/broken component never breaks the whole page.
+        try:
+            from rtree.tree_component import editable_tree_component
+            result = editable_tree_component(
+                trees_html,
+                edit_mode=True,
+                tree_height=height,
+                key="editable_tree",
+            )
+            if result and result.get("action") == "save":
+                _apply_inline_edit(result["boxId"], result["nodeId"], result["newLabel"])
+                st.rerun()
+        except Exception as exc:
+            st.warning(f"Edit mode unavailable: {exc}")
+            render_html_fragment(trees_html, height=height)
     else:
         render_html_fragment(trees_html, height=height)
 
@@ -112,6 +136,7 @@ def main() -> None:
         ensure_dataset_loaded()
 
         render_home_landing()
+        render_poster_download()
 
         render_home_nav()
         render_inline_name_editor()
