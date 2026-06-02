@@ -32,10 +32,12 @@ _POSTER_PATH = Path(__file__).parent / "FASEB Poster 2026-6-10.pdf"
 
 def render_home_nav() -> None:
     render_pending_badge()
-    nav1, nav2 = st.columns(2)
+    nav1, nav2, nav3 = st.columns(3)
     with nav1:
         st.page_link("pages/Edit_Data.py", label="Edit dataset", icon="✏️", use_container_width=True)
     with nav2:
+        st.page_link("pages/Add_Modify.py", label="Add/Modify", icon="➕", use_container_width=True)
+    with nav3:
         st.page_link("pages/Admin_Review.py", label="Admin", icon="🛡️", use_container_width=True)
 
 

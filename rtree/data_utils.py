@@ -196,3 +196,66 @@ def unique_node_id(box: dict[str, Any], candidate: str) -> str:
 
 def clone_dataset(dataset: dict[str, Any]) -> dict[str, Any]:
     return deepcopy(dataset)
+
+
+def find_box_by_title(dataset: dict[str, Any], title: str) -> dict[str, Any] | None:
+    target = str(title or "").strip().lower()
+    if not target:
+        return None
+    for box in dataset.get("boxes", []):
+        if str(box.get("title", "")).strip().lower() == target:
+            return box
+    return None
+
+
+def unique_box_id(dataset: dict[str, Any], candidate: str) -> str:
+    used = {box["id"] for box in dataset.get("boxes", [])}
+    if candidate not in used:
+        return candidate
+    suffix = 2
+    while f"{candidate}_{suffix}" in used:
+        suffix += 1
+    return f"{candidate}_{suffix}"
+
+
+def get_or_create_box(dataset: dict[str, Any], title: str) -> dict[str, Any]:
+    """Return the box matching ``title`` (case-insensitive) or create a new one."""
+    existing = find_box_by_title(dataset, title)
+    if existing is not None:
+        return existing
+    clean_title = str(title or "").strip() or "New tree"
+    box = {
+        "id": unique_box_id(dataset, slugify_id(clean_title).lower() or "box"),
+        "title": clean_title,
+        "nodes": [],
+        "links": [],
+    }
+    dataset.setdefault("boxes", []).append(box)
+    return box
+
+
+def get_or_create_node(box: dict[str, Any], name: str) -> str:
+    """Return the id of the node whose label matches ``name``; create it if absent."""
+    clean = str(name or "").strip()
+    if not clean:
+        raise ValueError("Name cannot be empty.")
+    target = clean.lower()
+    for node in box["nodes"]:
+        if str(node.get("label", "")).strip().lower() == target:
+            return node["id"]
+        if str(node.get("id", "")).strip().lower() == target:
+            return node["id"]
+    new_id = unique_node_id(box, slugify_id(clean))
+    box["nodes"].append({"id": new_id, "label": clean})
+    return new_id
+
+
+def add_link(box: dict[str, Any], parent_id: str, child_id: str) -> bool:
+    """Add a parent→child link if valid and not already present. Returns True if added."""
+    if not parent_id or not child_id or parent_id == child_id:
+        return False
+    for link in box.get("links", []):
+        if link["parent"] == parent_id and link["child"] == child_id:
+            return False
+    box.setdefault("links", []).append({"parent": parent_id, "child": child_id})
+    return True
