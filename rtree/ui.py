@@ -343,7 +343,7 @@ def render_inline_name_editor() -> None:
                     active_node["label"] = cleaned
                     persist_working_dataset()
                     set_status(
-                        f"Name updated to "{cleaned}" — awaiting admin approval.",
+                        f'Name updated to "{cleaned}" \u2014 awaiting admin approval.',
                         "success",
                     )
                     st.session_state.inline_edit_active = False
