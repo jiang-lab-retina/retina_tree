@@ -31,6 +31,7 @@ _POSTER_PATH = Path(__file__).parent / "FASEB Poster 2026-6-10.pdf"
 
 
 def render_home_nav() -> None:
+    """Navigation buttons shown at the bottom of the home page."""
     render_pending_badge()
     nav1, nav2, nav3 = st.columns(3)
     with nav1:
@@ -161,7 +162,6 @@ def main() -> None:
         render_home_landing()
         render_poster_download()
 
-        render_home_nav()
         render_inline_name_editor()
         search_box_id, search_focus_id, search_highlights = render_person_search()
         filter_box_id = render_box_filter(search_box_id=search_box_id)
@@ -176,6 +176,8 @@ def main() -> None:
         )
 
         render_status_banner()
+        st.divider()
+        render_home_nav()
         render_site_footer()
     except Exception as exc:
         st.error("The app hit an error while loading. Details below.")
