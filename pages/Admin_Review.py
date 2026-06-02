@@ -10,6 +10,7 @@ from rtree.admin_access import render_admin_access_gate
 from rtree.dataset_diff import diff_datasets, summarize_changes
 from rtree.dataset_store import (
     accept_all_changes,
+    accept_single_change,
     has_pending_changes,
     load_original_dataset,
     load_working_dataset,
@@ -32,14 +33,14 @@ render_admin_access_gate()
 ensure_dataset_loaded()
 
 render_page_header(
-    subtitle="Review differences between the permanent original and the live working copy. "
-    "Accept saves changes permanently; reject restores the live view to the original."
+    subtitle="Review each pending change. Accept individually or all at once. "
+    "Reject all reverts the live view to the last permanent version."
 )
 
 st.page_link("app.py", label="← Back to trees", icon="🌳")
 
 original = load_original_dataset()
-working = load_working_dataset()
+working  = load_working_dataset()
 
 if not has_pending_changes():
     st.success("Live data matches the permanent original. Nothing to review.")
@@ -48,6 +49,7 @@ if not has_pending_changes():
         st.metric("Original nodes", sum(len(b["nodes"]) for b in original.get("boxes", [])))
     with col2:
         st.metric("Live nodes", sum(len(b["nodes"]) for b in working.get("boxes", [])))
+    render_site_footer()
     st.stop()
 
 changes = diff_datasets(original, working)
@@ -60,34 +62,76 @@ for idx, (label, count) in enumerate(summary.items()):
     with metric_cols[idx % len(metric_cols)]:
         st.metric(label, count)
 
-st.markdown('<p class="apple-section-label">Change log</p>', unsafe_allow_html=True)
-st.dataframe(changes, use_container_width=True, hide_index=True)
-
-st.markdown('<p class="apple-section-label">Side-by-side JSON</p>', unsafe_allow_html=True)
-left, right = st.columns(2)
-with left:
-    st.markdown("**Original (permanent)**")
-    st.json(original)
-with right:
-    st.markdown("**Live (working)**")
-    st.json(working)
-
-st.markdown('<p class="apple-section-label">Decision</p>', unsafe_allow_html=True)
-accept_col, reject_col, _ = st.columns([1, 1, 2])
-
-with accept_col:
-    if st.button("Accept all changes", type="primary", use_container_width=True):
+# ── Accept all / Reject all ──────────────────────────────────────────────────
+st.markdown("---")
+bulk_accept, bulk_reject, _ = st.columns([1, 1, 2])
+with bulk_accept:
+    if st.button("Accept all changes", type="primary", use_container_width=True, key="accept_all"):
         accept_all_changes()
         reload_working_dataset()
-        set_status("All changes are now permanent. Original and live data match.", "success")
+        set_status("All changes are now permanent.", "success")
         st.rerun()
-
-with reject_col:
-    if st.button("Reject all (revert live)", type="secondary", use_container_width=True):
+with bulk_reject:
+    if st.button("Reject all (revert live)", type="secondary", use_container_width=True, key="reject_all"):
         reject_all_changes()
         reload_working_dataset()
         set_status("Live data reverted to the permanent original.", "success")
         st.rerun()
+
+# ── Per-change review ────────────────────────────────────────────────────────
+st.markdown("---")
+st.markdown("### Changes")
+st.caption("Click **Accept** on a single row to make just that change permanent.")
+
+# Group by box for readability
+box_order: list[str] = []
+by_box: dict[str, list[dict]] = {}
+for ch in changes:
+    bid = ch["box_id"]
+    if bid not in by_box:
+        box_order.append(bid)
+        by_box[bid] = []
+    by_box[bid].append(ch)
+
+TYPE_ICONS = {
+    "Box renamed":  "🏷️",
+    "Node added":   "➕",
+    "Node renamed": "✏️",
+    "Node removed": "🗑️",
+    "Link added":   "🔗",
+    "Link removed": "✂️",
+}
+
+for box_id in box_order:
+    box_changes = by_box[box_id]
+    box_label   = box_changes[0]["box"]
+    st.markdown(f"**Tree: {box_label}**")
+
+    for i, ch in enumerate(box_changes):
+        icon  = TYPE_ICONS.get(ch["type"], "•")
+        label = f"{icon} **{ch['type']}** — {ch['detail']}"
+        col_label, col_btn = st.columns([5, 1])
+        with col_label:
+            st.markdown(label)
+        with col_btn:
+            btn_key = f"accept_{box_id}_{ch['type']}_{i}"
+            if st.button("Accept", key=btn_key, use_container_width=True):
+                accept_single_change(ch)
+                reload_working_dataset()
+                set_status(f"Accepted: {ch['type']} — {ch['detail']}", "success")
+                st.rerun()
+
+    st.markdown("")  # spacing between boxes
+
+# ── Side-by-side JSON ────────────────────────────────────────────────────────
+with st.expander("Side-by-side JSON (original vs live)"):
+    left, right = st.columns(2)
+    with left:
+        st.markdown("**Original (permanent)**")
+        st.json(original)
+    with right:
+        st.markdown("**Live (working)**")
+        st.json(working)
 
 render_status_banner()
 render_site_footer()

@@ -162,6 +162,14 @@ def main() -> None:
         render_home_landing()
         render_poster_download()
 
+        _, add_mod_col, _ = st.columns([1, 2, 1])
+        with add_mod_col:
+            st.page_link(
+                "pages/Add_Modify.py",
+                label="➕ Add / Modify person or relationship",
+                use_container_width=True,
+            )
+
         render_inline_name_editor()
         search_box_id, search_focus_id, search_highlights = render_person_search()
         filter_box_id = render_box_filter(search_box_id=search_box_id)
