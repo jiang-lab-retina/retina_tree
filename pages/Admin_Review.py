@@ -8,7 +8,10 @@ import streamlit as st
 
 from rtree.admin_access import render_admin_access_gate
 from rtree.dataset_diff import diff_datasets, summarize_changes
+from rtree.data_utils import serialize_dataset
 from rtree.dataset_store import (
+    ORIGINAL_JSON_PATH,
+    WORKING_JSON_PATH,
     accept_all_changes,
     accept_single_change,
     has_pending_changes,
@@ -132,6 +135,31 @@ with st.expander("Side-by-side JSON (original vs live)"):
     with right:
         st.markdown("**Live (working)**")
         st.json(working)
+
+# ── Download ──────────────────────────────────────────────────────────────────
+st.markdown("---")
+st.markdown("### Download data")
+st.caption("Download either dataset as JSON to your local machine.")
+dl1, dl2 = st.columns(2)
+with dl1:
+    st.download_button(
+        label="⬇️ original_dataset.json",
+        data=serialize_dataset(original).encode("utf-8"),
+        file_name="original_dataset.json",
+        mime="application/json",
+        use_container_width=True,
+        key="dl_original",
+    )
+with dl2:
+    working_dl = load_working_dataset()
+    st.download_button(
+        label="⬇️ working_dataset.json",
+        data=serialize_dataset(working_dl).encode("utf-8"),
+        file_name="working_dataset.json",
+        mime="application/json",
+        use_container_width=True,
+        key="dl_working",
+    )
 
 render_status_banner()
 render_site_footer()
