@@ -19,6 +19,7 @@ from rtree.dataset_store import (
     load_working_dataset,
     reject_all_changes,
 )
+from rtree.github_backup import load_github_config, push_dataset_to_github
 from rtree.ui import (
     configure_page,
     ensure_dataset_loaded,
@@ -160,6 +161,67 @@ with dl2:
         use_container_width=True,
         key="dl_working",
     )
+
+# ── GitHub backup ─────────────────────────────────────────────────────────────
+st.markdown("---")
+st.markdown("### Back up to GitHub")
+gh_cfg = load_github_config()
+if gh_cfg is None:
+    st.info(
+        "GitHub backup is not configured. "
+        "Add a `[github]` section to your Streamlit secrets to enable it — "
+        "see the setup instructions below.",
+        icon="ℹ️",
+    )
+    with st.expander("Setup instructions"):
+        st.markdown(
+            f"""
+**1. Create a GitHub personal access token (PAT)**
+
+Go to [github.com/settings/tokens](https://github.com/settings/tokens) and create a
+token with **Contents: Read and Write** permission on the
+`jiang-lab-retina/retina_tree` repo.
+
+**2. Add secrets in Streamlit Cloud**
+
+In the Streamlit Cloud dashboard → your app → **Settings → Secrets**, paste:
+
+```toml
+[github]
+token  = "github_pat_YOUR_TOKEN_HERE"
+repo   = "jiang-lab-retina/retina_tree"
+branch = "main"
+path   = "data/retina_trees_data.json"
+```
+
+**3. For local development**, create `.streamlit/secrets.toml` with the same block.
+
+Once configured, the **Back up to GitHub** button will push the accepted dataset
+to `data/retina_trees_data.json` in the repo so changes survive redeployments.
+"""
+        )
+else:
+    st.caption(
+        f"Will commit `{gh_cfg['path']}` on branch `{gh_cfg['branch']}` "
+        f"of `{gh_cfg['repo']}`."
+    )
+    if st.button("☁️ Back up original_dataset to GitHub", use_container_width=True, key="gh_backup"):
+        current_original = load_original_dataset()
+        err = push_dataset_to_github(
+            serialize_dataset(current_original),
+            token=gh_cfg["token"],
+            repo=gh_cfg["repo"],
+            branch=gh_cfg["branch"],
+            path=gh_cfg["path"],
+        )
+        if err:
+            st.error(f"Backup failed: {err}")
+        else:
+            set_status(
+                f"Dataset backed up to GitHub ({gh_cfg['repo']} / {gh_cfg['path']}).",
+                "success",
+            )
+            st.rerun()
 
 render_status_banner()
 render_site_footer()
