@@ -14,6 +14,7 @@ from rtree.ui import (
     inject_apple_theme,
     render_box_filter,
     render_home_landing,
+    render_inline_name_editor,
     render_pending_badge,
     render_person_search,
     render_site_footer,
@@ -27,7 +28,7 @@ def render_home_nav() -> None:
     render_pending_badge()
     nav1, nav2 = st.columns(2)
     with nav1:
-        st.page_link("pages/Edit_Data.py", label="Edit data", icon="✏️", use_container_width=True)
+        st.page_link("pages/Edit_Data.py", label="Edit dataset", icon="✏️", use_container_width=True)
     with nav2:
         st.page_link("pages/Admin_Review.py", label="Admin", icon="🛡️", use_container_width=True)
 
@@ -80,6 +81,7 @@ def main() -> None:
         render_home_landing()
 
         render_home_nav()
+        render_inline_name_editor()
         search_box_id, search_focus_id, search_highlights = render_person_search()
         filter_box_id = render_box_filter(search_box_id=search_box_id)
 
