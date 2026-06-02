@@ -56,8 +56,7 @@ def render_poster_download() -> None:
         )
 
 
-def _apply_inline_edit(box_id: str, node_id: str, new_label: str) -> None:
-    """Find the node in session-state dataset and persist the rename."""
+def _apply_node_rename(box_id: str, node_id: str, new_label: str) -> None:
     dataset = st.session_state.get("dataset")
     if not dataset:
         return
@@ -73,6 +72,23 @@ def _apply_inline_edit(box_id: str, node_id: str, new_label: str) -> None:
                     )
                     return
     set_status(f"Could not find node {node_id!r} in box {box_id!r}.", "error")
+
+
+def _apply_box_title_rename(box_id: str, new_title: str) -> None:
+    dataset = st.session_state.get("dataset")
+    if not dataset:
+        return
+    for box in dataset.get("boxes", []):
+        if box["id"] == box_id:
+            old_title = box.get("title", box_id)
+            box["title"] = new_title
+            persist_working_dataset()
+            set_status(
+                f'Renamed tree "{old_title}" to "{new_title}" \u2014 awaiting admin approval.',
+                "success",
+            )
+            return
+    set_status(f"Could not find tree {box_id!r}.", "error")
 
 
 def render_trees(
@@ -121,9 +137,14 @@ def render_trees(
                 tree_height=height,
                 key="editable_tree",
             )
-            if result and result.get("action") == "save":
-                _apply_inline_edit(result["boxId"], result["nodeId"], result["newLabel"])
-                st.rerun()
+            if result:
+                action = result.get("action", "")
+                if action == "save-node":
+                    _apply_node_rename(result["boxId"], result["nodeId"], result["newLabel"])
+                    st.rerun()
+                elif action == "save-box-title":
+                    _apply_box_title_rename(result["boxId"], result["newTitle"])
+                    st.rerun()
         except Exception as exc:
             st.warning(f"Edit mode unavailable: {exc}")
             render_html_fragment(trees_html, height=height)

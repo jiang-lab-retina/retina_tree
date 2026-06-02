@@ -7,6 +7,7 @@
     * { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; background: transparent; }
 
+    /* ── node-name hover ── */
     .edit-mode .node-text {
       cursor: pointer;
       border-radius: 3px;
@@ -16,6 +17,19 @@
       background: rgba(90, 125, 140, 0.14);
     }
 
+    /* ── box-title hover ── */
+    .edit-mode .card-title-row h2 {
+      cursor: pointer;
+      border-radius: 4px;
+      padding: 1px 4px;
+      margin: 0 -4px;
+      transition: background 0.12s;
+    }
+    .edit-mode .card-title-row h2:hover {
+      background: rgba(90, 125, 140, 0.12);
+    }
+
+    /* ── hint bar ── */
     #edit-hint {
       display: none;
       font-size: 12px;
@@ -28,6 +42,7 @@
     }
     #edit-hint.visible { display: block; }
 
+    /* ── shared inline-edit widgets ── */
     .rt-edit-input {
       font: inherit;
       padding: 2px 6px;
@@ -35,9 +50,15 @@
       border-radius: 4px;
       outline: none;
       min-width: 100px;
-      max-width: 260px;
+      max-width: 320px;
       color: #1c1c1e;
       background: #fff;
+    }
+    /* slightly larger input for the h2 */
+    .rt-edit-input.title-input {
+      font-size: 1.1em;
+      font-weight: 600;
+      max-width: 480px;
     }
     .rt-edit-save,
     .rt-edit-cancel {
@@ -56,76 +77,53 @@
   </style>
 </head>
 <body>
-  <div id="edit-hint">&#9998; Click any name in the tree to rename it &nbsp;·&nbsp; Enter to save, Esc to cancel</div>
+  <div id="edit-hint">
+    &#9998; Click any <strong>person name</strong> or <strong>tree title</strong> to rename it
+    &nbsp;·&nbsp; Enter to save, Esc to cancel
+  </div>
   <div id="host"></div>
 
   <script>
   (function () {
-    /* ---------------------------------------------------------------
-       Minimal Streamlit component protocol (no external lib / CDN).
-       Implements the same postMessage contract as streamlit-component-lib.
-    --------------------------------------------------------------- */
-    var RENDER = "streamlit:render";
-    var COMPONENT_READY = "streamlit:componentReady";
-    var SET_VALUE = "streamlit:setComponentValue";
-    var SET_HEIGHT = "streamlit:setFrameHeight";
-    var API_VERSION = 1;
+    /* ── Streamlit component protocol (no external CDN) ── */
+    var RENDER           = "streamlit:render";
+    var COMPONENT_READY  = "streamlit:componentReady";
+    var SET_VALUE        = "streamlit:setComponentValue";
+    var SET_HEIGHT       = "streamlit:setFrameHeight";
+    var API_VERSION      = 1;
 
     function send(type, data) {
-      var msg = Object.assign({ isStreamlitMessage: true, type: type }, data || {});
-      window.parent.postMessage(msg, "*");
+      window.parent.postMessage(
+        Object.assign({ isStreamlitMessage: true, type: type }, data || {}),
+        "*"
+      );
     }
-    function setComponentValue(value) {
-      send(SET_VALUE, { value: value, dataType: "json" });
-    }
-    function setFrameHeight(h) {
-      send(SET_HEIGHT, { height: h });
-    }
-    function ready() {
-      send(COMPONENT_READY, { apiVersion: API_VERSION });
-    }
+    function setComponentValue(v) { send(SET_VALUE, { value: v, dataType: "json" }); }
+    function setFrameHeight(h)    { send(SET_HEIGHT, { height: h }); }
+    function ready()              { send(COMPONENT_READY, { apiVersion: API_VERSION }); }
 
-    var editMode = false;
-    var activeEdit = null;
+    /* ── shared state ── */
+    var editMode   = false;
+    var activeEdit = null; // { wrap, origElem }
 
+    /* ── helpers ── */
     function rerunScripts(container) {
       container.querySelectorAll('script').forEach(function (old) {
         var neo = document.createElement('script');
-        Array.from(old.attributes).forEach(function (a) {
-          neo.setAttribute(a.name, a.value);
-        });
+        Array.from(old.attributes).forEach(function (a) { neo.setAttribute(a.name, a.value); });
         neo.textContent = old.textContent;
         old.parentNode.replaceChild(neo, old);
       });
     }
 
-    function attachEditHandlers(container) {
-      container.querySelectorAll('.tree-node').forEach(function (tn) {
-        var nodeRow = tn.querySelector(':scope > .node-row');
-        if (!nodeRow) return;
-        var textSpan = nodeRow.querySelector('.node-text');
-        if (!textSpan || textSpan.dataset.rteh) return;
-        textSpan.dataset.rteh = '1';
-        textSpan.addEventListener('click', function (e) {
-          if (!editMode) return;
-          e.stopPropagation();
-          beginEdit(tn, textSpan);
-        });
-      });
-    }
-
-    function beginEdit(treeNode, textSpan) {
+    /* Build an inline edit widget that replaces `origElem` */
+    function makeEditWidget(origElem, currentText, extraInputClass, onSave) {
       if (activeEdit) cancelEdit();
-
-      var nodeId = treeNode.dataset.nodeId || '';
-      var card   = treeNode.closest('.tree-card');
-      var boxId  = card ? card.id : '';
-      var label  = textSpan.textContent;
 
       var inp = document.createElement('input');
       inp.type = 'text';
-      inp.className = 'rt-edit-input';
-      inp.value = label;
+      inp.className = 'rt-edit-input' + (extraInputClass ? ' ' + extraInputClass : '');
+      inp.value = currentText;
 
       var saveBtn = document.createElement('button');
       saveBtn.type = 'button';
@@ -142,29 +140,23 @@
       wrap.appendChild(saveBtn);
       wrap.appendChild(cancelBtn);
 
-      textSpan.replaceWith(wrap);
+      origElem.replaceWith(wrap);
       inp.focus();
       inp.select();
 
-      activeEdit = { wrap: wrap, origSpan: textSpan };
+      activeEdit = { wrap: wrap, origElem: origElem };
 
       function doSave() {
         var v = inp.value.trim();
         if (!v) { inp.focus(); return; }
         activeEdit = null;
-        textSpan.textContent = v;
-        wrap.replaceWith(textSpan);
-        setComponentValue({
-          action: 'save',
-          boxId: boxId,
-          nodeId: nodeId,
-          newLabel: v,
-          nonce: Date.now()
-        });
+        origElem.textContent = v;       // optimistic update
+        wrap.replaceWith(origElem);
+        onSave(v);
       }
       function doCancel() { cancelEdit(); }
 
-      saveBtn.addEventListener('click', doSave);
+      saveBtn.addEventListener('click',   doSave);
       cancelBtn.addEventListener('click', doCancel);
       inp.addEventListener('keydown', function (e) {
         if (e.key === 'Enter')  doSave();
@@ -174,10 +166,61 @@
 
     function cancelEdit() {
       if (!activeEdit) return;
-      activeEdit.wrap.replaceWith(activeEdit.origSpan);
+      activeEdit.wrap.replaceWith(activeEdit.origElem);
       activeEdit = null;
     }
 
+    /* ── attach handlers: person names ── */
+    function attachNodeHandlers(container) {
+      container.querySelectorAll('.tree-node').forEach(function (tn) {
+        var nodeRow  = tn.querySelector(':scope > .node-row');
+        if (!nodeRow) return;
+        var textSpan = nodeRow.querySelector('.node-text');
+        if (!textSpan || textSpan.dataset.rteh) return;
+        textSpan.dataset.rteh = '1';
+
+        textSpan.addEventListener('click', function (e) {
+          if (!editMode) return;
+          e.stopPropagation();
+          var nodeId = tn.dataset.nodeId || '';
+          var boxId  = (tn.closest('.tree-card') || {}).id || '';
+          makeEditWidget(textSpan, textSpan.textContent, '', function (newLabel) {
+            setComponentValue({
+              action: 'save-node',
+              boxId: boxId,
+              nodeId: nodeId,
+              newLabel: newLabel,
+              nonce: Date.now()
+            });
+          });
+        });
+      });
+    }
+
+    /* ── attach handlers: box/tree titles ── */
+    function attachTitleHandlers(container) {
+      container.querySelectorAll('.tree-card').forEach(function (card) {
+        var h2 = card.querySelector('.card-title-row h2');
+        if (!h2 || h2.dataset.rtth) return;
+        h2.dataset.rtth = '1';
+
+        h2.addEventListener('click', function (e) {
+          if (!editMode) return;
+          e.stopPropagation();
+          var boxId = card.id || '';
+          makeEditWidget(h2, h2.textContent, 'title-input', function (newTitle) {
+            setComponentValue({
+              action: 'save-box-title',
+              boxId: boxId,
+              newTitle: newTitle,
+              nonce: Date.now()
+            });
+          });
+        });
+      });
+    }
+
+    /* ── render loop ── */
     function onRender(args) {
       var treeHtml   = (args && args.treeHtml)   || '';
       var em         = !!(args && args.editMode);
@@ -185,8 +228,7 @@
 
       editMode = em;
 
-      var hint = document.getElementById('edit-hint');
-      hint.className = em ? 'visible' : '';
+      document.getElementById('edit-hint').className = em ? 'visible' : '';
 
       var host = document.getElementById('host');
       host.className = em ? 'edit-mode' : '';
@@ -198,7 +240,10 @@
         host.dataset.sig = sig;
       }
 
-      if (em) attachEditHandlers(host);
+      if (em) {
+        attachNodeHandlers(host);
+        attachTitleHandlers(host);
+      }
 
       setFrameHeight(treeHeight + 48);
     }
@@ -209,9 +254,7 @@
       onRender(data.args || {});
     });
 
-    /* Announce readiness so Streamlit starts sending render messages. */
     ready();
-    /* A nudge in case the first message arrived before listener wiring. */
     setFrameHeight(640);
   })();
   </script>
