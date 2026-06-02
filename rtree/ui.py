@@ -258,100 +258,19 @@ def render_box_filter(*, search_box_id: str | None = None) -> str | None:
 
 
 def render_inline_name_editor() -> None:
-    """Home-page inline panel to rename a person (node) and queue for admin approval."""
+    """Toggle button that activates click-to-edit mode on the tree nodes."""
     dataset = st.session_state.dataset
     if not dataset or not dataset.get("boxes"):
         return
 
-    if not st.session_state.inline_edit_active:
+    if st.session_state.inline_edit_active:
+        if st.button("Done editing", type="primary", key="inline_edit_done_btn"):
+            st.session_state.inline_edit_active = False
+            st.rerun()
+    else:
         if st.button("Edit ✏️", key="inline_edit_open_btn"):
             st.session_state.inline_edit_active = True
             st.rerun()
-        return
-
-    boxes = dataset["boxes"]
-
-    # Resolve current box selection
-    box_ids = [b["id"] for b in boxes]
-    box_labels = {b["id"]: b["title"] for b in boxes}
-
-    current_box_id = st.session_state.inline_edit_box_id
-    if current_box_id not in box_ids:
-        current_box_id = box_ids[0]
-        st.session_state.inline_edit_box_id = current_box_id
-
-    with st.container():
-        render_custom_html(render_section_rule(label="Edit name"))
-
-        col_box, col_node = st.columns(2)
-        with col_box:
-            selected_box_id = st.selectbox(
-                "Tree",
-                options=box_ids,
-                index=box_ids.index(current_box_id),
-                format_func=lambda bid: box_labels[bid],
-                key="inline_edit_box_sel",
-            )
-        if selected_box_id != st.session_state.inline_edit_box_id:
-            st.session_state.inline_edit_box_id = selected_box_id
-            st.session_state.inline_edit_node_id = None
-            st.rerun()
-
-        box = next(b for b in boxes if b["id"] == selected_box_id)
-        nodes = box.get("nodes", [])
-        if not nodes:
-            st.caption("No nodes in this tree.")
-            if st.button("Cancel", key="inline_edit_cancel_empty"):
-                st.session_state.inline_edit_active = False
-                st.rerun()
-            return
-
-        node_ids = [n["id"] for n in nodes]
-        node_labels_map = {n["id"]: f"{n['label']} ({n['id']})" for n in nodes}
-
-        current_node_id = st.session_state.inline_edit_node_id
-        if current_node_id not in node_ids:
-            current_node_id = node_ids[0]
-            st.session_state.inline_edit_node_id = current_node_id
-
-        with col_node:
-            selected_node_id = st.selectbox(
-                "Person",
-                options=node_ids,
-                index=node_ids.index(current_node_id),
-                format_func=lambda nid: node_labels_map[nid],
-                key="inline_edit_node_sel",
-            )
-        if selected_node_id != st.session_state.inline_edit_node_id:
-            st.session_state.inline_edit_node_id = selected_node_id
-            st.rerun()
-
-        active_node = next(n for n in nodes if n["id"] == selected_node_id)
-        new_name = st.text_input(
-            "Name",
-            value=active_node["label"],
-            key="inline_edit_name_input",
-        )
-
-        col_save, col_cancel = st.columns(2)
-        with col_save:
-            if st.button("Save", type="primary", use_container_width=True, key="inline_edit_save"):
-                cleaned = new_name.strip()
-                if not cleaned:
-                    set_status("Name cannot be empty.", "error")
-                else:
-                    active_node["label"] = cleaned
-                    persist_working_dataset()
-                    set_status(
-                        f'Name updated to "{cleaned}" \u2014 awaiting admin approval.',
-                        "success",
-                    )
-                    st.session_state.inline_edit_active = False
-                    st.rerun()
-        with col_cancel:
-            if st.button("Cancel", type="secondary", use_container_width=True, key="inline_edit_cancel"):
-                st.session_state.inline_edit_active = False
-                st.rerun()
 
 
 def render_editor_page() -> None:

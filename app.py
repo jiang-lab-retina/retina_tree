@@ -7,11 +7,13 @@ import site_setup  # noqa: F401
 import streamlit as st
 
 from rtree.streamlit_render import render_html_fragment, streamlit_supports_tree_html
+from rtree.tree_component import editable_tree_component
 from rtree.tree_html import estimate_trees_height, render_trees_html
 from rtree.ui import (
     configure_page,
     ensure_dataset_loaded,
     inject_apple_theme,
+    persist_working_dataset,
     render_box_filter,
     render_home_landing,
     render_inline_name_editor,
@@ -21,6 +23,7 @@ from rtree.ui import (
     render_status_banner,
     render_trees_section_intro,
     render_view_toolbar,
+    set_status,
 )
 
 
@@ -31,6 +34,25 @@ def render_home_nav() -> None:
         st.page_link("pages/Edit_Data.py", label="Edit dataset", icon="✏️", use_container_width=True)
     with nav2:
         st.page_link("pages/Admin_Review.py", label="Admin", icon="🛡️", use_container_width=True)
+
+
+def _apply_inline_edit(box_id: str, node_id: str, new_label: str) -> None:
+    """Find the node in session-state dataset and persist the rename."""
+    dataset = st.session_state.get("dataset")
+    if not dataset:
+        return
+    for box in dataset.get("boxes", []):
+        if box["id"] == box_id:
+            for node in box.get("nodes", []):
+                if node["id"] == node_id:
+                    node["label"] = new_label
+                    persist_working_dataset()
+                    set_status(
+                        f'Renamed "{node_id}" to "{new_label}" \u2014 awaiting admin approval.',
+                        "success",
+                    )
+                    return
+    set_status(f"Could not find node {node_id!r} in box {box_id!r}.", "error")
 
 
 def render_trees(
@@ -66,10 +88,21 @@ def render_trees(
         focus_box_id=focus_box_id,
         highlight_node_ids=highlight_node_ids,
     )
-    render_html_fragment(
-        trees_html,
-        height=estimate_trees_height(boxes, view_mode),
-    )
+    height = estimate_trees_height(boxes, view_mode)
+
+    edit_mode = st.session_state.get("inline_edit_active", False)
+    if edit_mode:
+        result = editable_tree_component(
+            trees_html,
+            edit_mode=True,
+            tree_height=height,
+            key="editable_tree",
+        )
+        if result and result.get("action") == "save":
+            _apply_inline_edit(result["boxId"], result["nodeId"], result["newLabel"])
+            st.rerun()
+    else:
+        render_html_fragment(trees_html, height=height)
 
 
 def main() -> None:

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: transparent; }
+
+    /* Edit-mode cursor & hover on node labels */
+    .edit-mode .node-text {
+      cursor: pointer;
+      border-radius: 3px;
+      transition: background 0.12s;
+    }
+    .edit-mode .node-text:hover {
+      background: rgba(90, 125, 140, 0.14);
+    }
+
+    /* Hint bar shown in edit mode */
+    #edit-hint {
+      display: none;
+      font-size: 12px;
+      color: #5a7d8c;
+      padding: 5px 10px;
+      background: #eef3f5;
+      border: 1px solid #c8d8de;
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+    #edit-hint.visible { display: block; }
+
+    /* Inline edit widgets */
+    .rt-edit-input {
+      font: inherit;
+      padding: 2px 6px;
+      border: 2px solid #5a7d8c;
+      border-radius: 4px;
+      outline: none;
+      min-width: 100px;
+      max-width: 260px;
+      color: #1c1c1e;
+      background: #fff;
+    }
+    .rt-edit-save,
+    .rt-edit-cancel {
+      padding: 2px 8px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      margin-left: 3px;
+      vertical-align: middle;
+    }
+    .rt-edit-save   { background: #5a7d8c; color: #fff; }
+    .rt-edit-cancel { background: #e5e5ea; color: #3a3a3c; }
+    .rt-edit-save:hover   { background: #4a6a78; }
+    .rt-edit-cancel:hover { background: #d1d1d6; }
+  </style>
+</head>
+<body>
+  <div id="edit-hint">&#9998; Click any name in the tree to rename it &nbsp;·&nbsp; Enter to save, Esc to cancel</div>
+  <div id="host"></div>
+
+  <script src="https://unpkg.com/streamlit-component-lib@2.0.0/dist/component-lib.js"></script>
+  <script>
+  (function () {
+    var editMode = false;
+    var activeEdit = null; // { wrap, origSpan }
+
+    /* Re-execute <script> tags injected via innerHTML */
+    function rerunScripts(container) {
+      container.querySelectorAll('script').forEach(function (old) {
+        var neo = document.createElement('script');
+        Array.from(old.attributes).forEach(function (a) {
+          neo.setAttribute(a.name, a.value);
+        });
+        neo.textContent = old.textContent;
+        old.parentNode.replaceChild(neo, old);
+      });
+    }
+
+    /* Attach click-to-edit handlers to every .tree-node in container */
+    function attachEditHandlers(container) {
+      container.querySelectorAll('.tree-node').forEach(function (tn) {
+        var nodeRow = tn.querySelector(':scope > .node-row');
+        if (!nodeRow) return;
+        var textSpan = nodeRow.querySelector('.node-text');
+        if (!textSpan || textSpan.dataset.rteh) return;
+        textSpan.dataset.rteh = '1';
+        textSpan.addEventListener('click', function (e) {
+          if (!editMode) return;
+          e.stopPropagation();
+          beginEdit(tn, textSpan);
+        });
+      });
+    }
+
+    function beginEdit(treeNode, textSpan) {
+      if (activeEdit) cancelEdit();
+
+      var nodeId = treeNode.dataset.nodeId || '';
+      var card   = treeNode.closest('.tree-card');
+      var boxId  = card ? card.id : '';
+      var label  = textSpan.textContent;
+
+      var inp = document.createElement('input');
+      inp.type      = 'text';
+      inp.className = 'rt-edit-input';
+      inp.value     = label;
+
+      var saveBtn   = document.createElement('button');
+      saveBtn.type      = 'button';
+      saveBtn.className = 'rt-edit-save';
+      saveBtn.textContent = 'Save';
+
+      var cancelBtn = document.createElement('button');
+      cancelBtn.type      = 'button';
+      cancelBtn.className = 'rt-edit-cancel';
+      cancelBtn.textContent = 'Cancel';
+
+      var wrap = document.createElement('span');
+      wrap.appendChild(inp);
+      wrap.appendChild(saveBtn);
+      wrap.appendChild(cancelBtn);
+
+      textSpan.replaceWith(wrap);
+      inp.focus();
+      inp.select();
+
+      activeEdit = { wrap: wrap, origSpan: textSpan };
+
+      function doSave() {
+        var v = inp.value.trim();
+        if (!v) { inp.focus(); return; }
+        activeEdit = null;
+        /* Optimistically update the displayed text */
+        textSpan.textContent = v;
+        wrap.replaceWith(textSpan);
+        Streamlit.setComponentValue({
+          action:   'save',
+          boxId:    boxId,
+          nodeId:   nodeId,
+          newLabel: v
+        });
+      }
+
+      function doCancel() { cancelEdit(); }
+
+      saveBtn.addEventListener('click',   doSave);
+      cancelBtn.addEventListener('click', doCancel);
+      inp.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter')  doSave();
+        if (e.key === 'Escape') doCancel();
+      });
+    }
+
+    function cancelEdit() {
+      if (!activeEdit) return;
+      activeEdit.wrap.replaceWith(activeEdit.origSpan);
+      activeEdit = null;
+    }
+
+    /* ---- Streamlit render loop ---- */
+    Streamlit.events.addEventListener(Streamlit.RENDER_EVENT, function (ev) {
+      var args       = ev.detail.args;
+      var treeHtml   = args.treeHtml   || '';
+      var em         = !!args.editMode;
+      var treeHeight = args.treeHeight || 600;
+
+      editMode = em;
+
+      var hint = document.getElementById('edit-hint');
+      hint.className = em ? 'visible' : '';
+
+      var host = document.getElementById('host');
+      host.className = em ? 'edit-mode' : '';
+
+      /* Re-render only when the HTML changes (compare by length + first 120 chars) */
+      var sig = treeHtml.length + '|' + treeHtml.slice(0, 120);
+      if (host.dataset.sig !== sig) {
+        host.innerHTML = treeHtml;
+        rerunScripts(host);
+        host.dataset.sig = sig;
+      }
+
+      if (em) attachEditHandlers(host);
+
+      Streamlit.setFrameHeight(treeHeight + 40); /* +40 for hint bar */
+    });
+
+    Streamlit.setComponentReady();
+  })();
+  </script>
+</body>
+</html>
