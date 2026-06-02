@@ -7,7 +7,6 @@
     * { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; background: transparent; }
 
-    /* Edit-mode cursor & hover on node labels */
     .edit-mode .node-text {
       cursor: pointer;
       border-radius: 3px;
@@ -17,7 +16,6 @@
       background: rgba(90, 125, 140, 0.14);
     }
 
-    /* Hint bar shown in edit mode */
     #edit-hint {
       display: none;
       font-size: 12px;
@@ -30,7 +28,6 @@
     }
     #edit-hint.visible { display: block; }
 
-    /* Inline edit widgets */
     .rt-edit-input {
       font: inherit;
       padding: 2px 6px;
@@ -62,13 +59,35 @@
   <div id="edit-hint">&#9998; Click any name in the tree to rename it &nbsp;·&nbsp; Enter to save, Esc to cancel</div>
   <div id="host"></div>
 
-  <script src="https://unpkg.com/streamlit-component-lib@2.0.0/dist/component-lib.js"></script>
   <script>
   (function () {
-    var editMode = false;
-    var activeEdit = null; // { wrap, origSpan }
+    /* ---------------------------------------------------------------
+       Minimal Streamlit component protocol (no external lib / CDN).
+       Implements the same postMessage contract as streamlit-component-lib.
+    --------------------------------------------------------------- */
+    var RENDER = "streamlit:render";
+    var COMPONENT_READY = "streamlit:componentReady";
+    var SET_VALUE = "streamlit:setComponentValue";
+    var SET_HEIGHT = "streamlit:setFrameHeight";
+    var API_VERSION = 1;
 
-    /* Re-execute <script> tags injected via innerHTML */
+    function send(type, data) {
+      var msg = Object.assign({ isStreamlitMessage: true, type: type }, data || {});
+      window.parent.postMessage(msg, "*");
+    }
+    function setComponentValue(value) {
+      send(SET_VALUE, { value: value, dataType: "json" });
+    }
+    function setFrameHeight(h) {
+      send(SET_HEIGHT, { height: h });
+    }
+    function ready() {
+      send(COMPONENT_READY, { apiVersion: API_VERSION });
+    }
+
+    var editMode = false;
+    var activeEdit = null;
+
     function rerunScripts(container) {
       container.querySelectorAll('script').forEach(function (old) {
         var neo = document.createElement('script');
@@ -80,7 +99,6 @@
       });
     }
 
-    /* Attach click-to-edit handlers to every .tree-node in container */
     function attachEditHandlers(container) {
       container.querySelectorAll('.tree-node').forEach(function (tn) {
         var nodeRow = tn.querySelector(':scope > .node-row');
@@ -105,17 +123,17 @@
       var label  = textSpan.textContent;
 
       var inp = document.createElement('input');
-      inp.type      = 'text';
+      inp.type = 'text';
       inp.className = 'rt-edit-input';
-      inp.value     = label;
+      inp.value = label;
 
-      var saveBtn   = document.createElement('button');
-      saveBtn.type      = 'button';
+      var saveBtn = document.createElement('button');
+      saveBtn.type = 'button';
       saveBtn.className = 'rt-edit-save';
       saveBtn.textContent = 'Save';
 
       var cancelBtn = document.createElement('button');
-      cancelBtn.type      = 'button';
+      cancelBtn.type = 'button';
       cancelBtn.className = 'rt-edit-cancel';
       cancelBtn.textContent = 'Cancel';
 
@@ -134,20 +152,19 @@
         var v = inp.value.trim();
         if (!v) { inp.focus(); return; }
         activeEdit = null;
-        /* Optimistically update the displayed text */
         textSpan.textContent = v;
         wrap.replaceWith(textSpan);
-        Streamlit.setComponentValue({
-          action:   'save',
-          boxId:    boxId,
-          nodeId:   nodeId,
-          newLabel: v
+        setComponentValue({
+          action: 'save',
+          boxId: boxId,
+          nodeId: nodeId,
+          newLabel: v,
+          nonce: Date.now()
         });
       }
-
       function doCancel() { cancelEdit(); }
 
-      saveBtn.addEventListener('click',   doSave);
+      saveBtn.addEventListener('click', doSave);
       cancelBtn.addEventListener('click', doCancel);
       inp.addEventListener('keydown', function (e) {
         if (e.key === 'Enter')  doSave();
@@ -161,12 +178,10 @@
       activeEdit = null;
     }
 
-    /* ---- Streamlit render loop ---- */
-    Streamlit.events.addEventListener(Streamlit.RENDER_EVENT, function (ev) {
-      var args       = ev.detail.args;
-      var treeHtml   = args.treeHtml   || '';
-      var em         = !!args.editMode;
-      var treeHeight = args.treeHeight || 600;
+    function onRender(args) {
+      var treeHtml   = (args && args.treeHtml)   || '';
+      var em         = !!(args && args.editMode);
+      var treeHeight = (args && args.treeHeight) || 600;
 
       editMode = em;
 
@@ -176,7 +191,6 @@
       var host = document.getElementById('host');
       host.className = em ? 'edit-mode' : '';
 
-      /* Re-render only when the HTML changes (compare by length + first 120 chars) */
       var sig = treeHtml.length + '|' + treeHtml.slice(0, 120);
       if (host.dataset.sig !== sig) {
         host.innerHTML = treeHtml;
@@ -186,10 +200,19 @@
 
       if (em) attachEditHandlers(host);
 
-      Streamlit.setFrameHeight(treeHeight + 40); /* +40 for hint bar */
+      setFrameHeight(treeHeight + 48);
+    }
+
+    window.addEventListener("message", function (event) {
+      var data = event.data;
+      if (!data || data.type !== RENDER) return;
+      onRender(data.args || {});
     });
 
-    Streamlit.setComponentReady();
+    /* Announce readiness so Streamlit starts sending render messages. */
+    ready();
+    /* A nudge in case the first message arrived before listener wiring. */
+    setFrameHeight(640);
   })();
   </script>
 </body>
