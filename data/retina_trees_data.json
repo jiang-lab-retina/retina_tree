@@ -1174,7 +1174,7 @@
             "query": "\"Pan Z\"[Author] AND (retina[Title/Abstract] OR retinal[Title/Abstract])",
             "search_label": "Pan Z.",
             "pmid": "38763352",
-            "title": "Prohibitin 2 deficiency in photoreceptors leads to progressive retinal degeneration and facilitated Müller glia engulfing microglia debris.",
+            "title": "Prohibitin 2 deficiency in photoreceptors leads to progressive retinal degeneration and facilitated M\u00fcller glia engulfing microglia debris.",
             "pubdate": "2024/07/01 00:00",
             "year": 2024,
             "confidence": "medium",
@@ -1862,7 +1862,7 @@
             "query": "\"Link\"[All Fields] AND (retina[Title/Abstract] OR retinal[Title/Abstract])",
             "search_label": "Link",
             "pmid": "40067805",
-            "title": "The USH3A causative gene clarin1 functions in Müller glia to maintain retinal photoreceptors.",
+            "title": "The USH3A causative gene clarin1 functions in M\u00fcller glia to maintain retinal photoreceptors.",
             "pubdate": "2025/03/11 00:00",
             "year": 2025,
             "confidence": "low",
@@ -2850,7 +2850,7 @@
             "query": "\"Tomita\"[Author] AND (retina[Title/Abstract] OR retinal[Title/Abstract])",
             "search_label": "Tomita",
             "pmid": "11038014",
-            "title": "Müller cells in the preconditioned retinal ischemic injury rat.",
+            "title": "M\u00fcller cells in the preconditioned retinal ischemic injury rat.",
             "pubdate": "2000/08/01 00:00",
             "year": 2000,
             "confidence": "low",
@@ -4297,7 +4297,7 @@
         },
         {
           "id": "JIANG",
-          "label": "Jiang",
+          "label": "Jiang Zheng",
           "pubmed": {
             "source": "PubMed",
             "status": "matched",
@@ -5032,7 +5032,7 @@
             "query": "\"Venkatesh\"[All Fields] AND (retina[Title/Abstract] OR retinal[Title/Abstract])",
             "search_label": "Venkatesh",
             "pmid": "35792930",
-            "title": "Selective rod outer segment disruption in commotio retinae - a finding identified on Multicolour® Imaging.",
+            "title": "Selective rod outer segment disruption in commotio retinae - a finding identified on Multicolour\u00ae Imaging.",
             "pubdate": "2022/12/01 00:00",
             "year": 2022,
             "confidence": "low",
@@ -5648,7 +5648,7 @@
             "query": "\"Paul\"[All Fields] AND (retina[Title/Abstract] OR retinal[Title/Abstract])",
             "search_label": "Paul",
             "pmid": "37533369",
-            "title": "Inhibition of altered Orai1 channels in Müller cells protects photoreceptors in retinal degeneration.",
+            "title": "Inhibition of altered Orai1 channels in M\u00fcller cells protects photoreceptors in retinal degeneration.",
             "pubdate": "2023/11/01 00:00",
             "year": 2023,
             "confidence": "low",
@@ -5935,12 +5935,5 @@
         ]
       ]
     }
-  ],
-  "timeline": {
-    "min_year": 1878,
-    "max_year": 2026,
-    "unresolved_nodes": 5,
-    "source": "earliest PubMed paper using derived author query + retina/retinal"
-  },
-  "pubmed_enriched_at": "2026-04-20"
+  ]
 }
