@@ -19,7 +19,21 @@ from rtree.dataset_store import (
     load_working_dataset,
     reject_all_changes,
 )
-from rtree.github_backup import load_github_config, push_dataset_to_github
+from rtree.github_backup import backup_datasets, load_github_config, push_dataset_to_github
+
+
+def _auto_backup_after_accept() -> str | None:
+    """Push the now-accepted original (and current working) to GitHub.
+
+    Returns None on success/not-configured-silent; a string note on error.
+    """
+    cfg = load_github_config()
+    if cfg is None:
+        return None  # not configured — handled by the manual section/UI
+    return backup_datasets(
+        accepted_json=serialize_dataset(load_original_dataset()),
+        working_json=serialize_dataset(load_working_dataset()),
+    )
 from rtree.ui import (
     configure_page,
     ensure_dataset_loaded,
@@ -73,7 +87,11 @@ with bulk_accept:
     if st.button("Accept all changes", type="primary", use_container_width=True, key="accept_all"):
         accept_all_changes()
         reload_working_dataset()
-        set_status("All changes are now permanent.", "success")
+        backup_err = _auto_backup_after_accept()
+        msg = "All changes are now permanent."
+        if backup_err:
+            msg += f" (GitHub backup note: {backup_err})"
+        set_status(msg, "warning" if backup_err else "success")
         st.rerun()
 with bulk_reject:
     if st.button("Reject all (revert live)", type="secondary", use_container_width=True, key="reject_all"):
@@ -122,7 +140,11 @@ for box_id in box_order:
             if st.button("Accept", key=btn_key, use_container_width=True):
                 accept_single_change(ch)
                 reload_working_dataset()
-                set_status(f"Accepted: {ch['type']} — {ch['detail']}", "success")
+                backup_err = _auto_backup_after_accept()
+                msg = f"Accepted: {ch['type']} — {ch['detail']}"
+                if backup_err:
+                    msg += f" (GitHub backup note: {backup_err})"
+                set_status(msg, "warning" if backup_err else "success")
                 st.rerun()
 
     st.markdown("")  # spacing between boxes

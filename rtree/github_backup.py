@@ -101,11 +101,57 @@ def load_github_config() -> dict[str, str] | None:
         cfg = st.secrets.get("github", {})
         if cfg.get("token") and cfg.get("repo"):
             return {
-                "token":  cfg["token"],
-                "repo":   cfg["repo"],
-                "branch": cfg.get("branch", "main"),
-                "path":   cfg.get("path", "data/retina_trees_data.json"),
+                "token":   cfg["token"],
+                "repo":    cfg["repo"],
+                "branch":  cfg.get("branch", "main"),
+                "path":    cfg.get("path", "data/retina_trees_data.json"),
+                "working_path": cfg.get("working_path", "data/working_backup.json"),
             }
     except Exception:
         pass
     return None
+
+
+def backup_datasets(
+    *,
+    accepted_json: str | None = None,
+    working_json: str | None = None,
+) -> str | None:
+    """Push accepted and/or working datasets to GitHub.
+
+    ``accepted_json`` is committed to the seed path (``path``) so it becomes
+    the data loaded on a fresh container start. ``working_json`` is committed
+    to ``working_path`` so pending (not-yet-accepted) edits also survive.
+
+    Returns ``None`` on success (or when nothing to do), else an error string.
+    Returns a sentinel message if GitHub is not configured.
+    """
+    cfg = load_github_config()
+    if cfg is None:
+        return "GitHub backup not configured."
+
+    errors: list[str] = []
+    if accepted_json is not None:
+        err = push_dataset_to_github(
+            accepted_json,
+            token=cfg["token"],
+            repo=cfg["repo"],
+            branch=cfg["branch"],
+            path=cfg["path"],
+            commit_message="chore: auto-backup accepted dataset [skip ci]",
+        )
+        if err:
+            errors.append(err)
+    if working_json is not None:
+        err = push_dataset_to_github(
+            working_json,
+            token=cfg["token"],
+            repo=cfg["repo"],
+            branch=cfg["branch"],
+            path=cfg["working_path"],
+            commit_message="chore: auto-backup working edits [skip ci]",
+        )
+        if err:
+            errors.append(err)
+
+    return " ; ".join(errors) if errors else None

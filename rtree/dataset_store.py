@@ -18,11 +18,14 @@ DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 SEED_JSON_PATH = DEFAULT_JSON_PATH
 ORIGINAL_JSON_PATH = DATA_DIR / "original_dataset.json"
 WORKING_JSON_PATH = DATA_DIR / "working_dataset.json"
+# Committed to git via the GitHub backup so pending edits survive redeploys.
+WORKING_BACKUP_JSON_PATH = DATA_DIR / "working_backup.json"
 
 
 def ensure_datasets_exist() -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     if not ORIGINAL_JSON_PATH.exists():
+        # Latest accepted data is committed to the seed file.
         if SEED_JSON_PATH.exists():
             shutil.copy2(SEED_JSON_PATH, ORIGINAL_JSON_PATH)
         else:
@@ -31,7 +34,12 @@ def ensure_datasets_exist() -> None:
                 encoding="utf-8",
             )
     if not WORKING_JSON_PATH.exists():
-        shutil.copy2(ORIGINAL_JSON_PATH, WORKING_JSON_PATH)
+        # Prefer the latest edited (pending) data if it was backed up to git;
+        # otherwise fall back to the accepted original.
+        if WORKING_BACKUP_JSON_PATH.exists():
+            shutil.copy2(WORKING_BACKUP_JSON_PATH, WORKING_JSON_PATH)
+        else:
+            shutil.copy2(ORIGINAL_JSON_PATH, WORKING_JSON_PATH)
 
 
 def load_original_dataset() -> dict:

@@ -266,11 +266,33 @@ def render_inline_name_editor() -> None:
     if st.session_state.inline_edit_active:
         if st.button("Done editing", type="primary", key="inline_edit_done_btn"):
             st.session_state.inline_edit_active = False
+            _backup_working_to_github()
             st.rerun()
     else:
         if st.button("Edit ✏️", key="inline_edit_open_btn"):
             st.session_state.inline_edit_active = True
             st.rerun()
+
+
+def _backup_working_to_github() -> None:
+    """Push the current working (pending) dataset to GitHub if configured.
+
+    Best-effort: surfaces a short status note on failure, silent if GitHub
+    backup is not configured.
+    """
+    try:
+        from rtree.data_utils import serialize_dataset as _serialize
+        from rtree.github_backup import backup_datasets, load_github_config
+
+        if load_github_config() is None:
+            return
+        err = backup_datasets(working_json=_serialize(load_working_dataset()))
+        if err:
+            set_status(f"Saved edits, but GitHub backup note: {err}", "warning")
+        else:
+            set_status("Edits saved and backed up to GitHub.", "success")
+    except Exception as exc:  # never block the UI on backup problems
+        set_status(f"Saved edits locally; GitHub backup skipped: {exc}", "warning")
 
 
 def render_editor_page() -> None:
