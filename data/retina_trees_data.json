@@ -4297,7 +4297,7 @@
         },
         {
           "id": "JIANG",
-          "label": "Jiang Zheng",
+          "label": "Jiang",
           "pubmed": {
             "source": "PubMed",
             "status": "matched",
@@ -4535,11 +4535,11 @@
     },
     {
       "id": "box-06",
-      "title": "Tomita (Keio) box",
+      "title": "Tsuneo Tomita (Keio U) box",
       "nodes": [
         {
           "id": "TT",
-          "label": "Tadashi Tomita (Keio)",
+          "label": "Tsuneo Tomita (Keio U)",
           "pubmed": {
             "source": "PubMed",
             "status": "matched",
@@ -4659,11 +4659,11 @@
     },
     {
       "id": "box-07",
-      "title": "Leslie Stryer box",
+      "title": "Lubert Stryer box",
       "nodes": [
         {
           "id": "LS",
-          "label": "Leslie Stryer",
+          "label": "Lubert Stryer",
           "pubmed": {
             "source": "PubMed",
             "status": "matched",
@@ -4743,11 +4743,11 @@
     },
     {
       "id": "box-08",
-      "title": "Werner K. Stell box",
+      "title": "William Stell box",
       "nodes": [
         {
           "id": "WKS",
-          "label": "Werner K. Stell",
+          "label": "William Stell",
           "pubmed": {
             "source": "PubMed",
             "status": "matched",
@@ -5605,11 +5605,11 @@
     },
     {
       "id": "box-15",
-      "title": "Emilio Raviola box",
+      "title": "Elio Raviola box",
       "nodes": [
         {
           "id": "ER",
-          "label": "Emilio Raviola",
+          "label": "Elio Raviola",
           "pubmed": {
             "source": "PubMed",
             "status": "matched",
@@ -5853,11 +5853,11 @@
     },
     {
       "id": "box-17",
-      "title": "Richard H. Steinberg box",
+      "title": "Roy Steinberg box",
       "nodes": [
         {
           "id": "RHS",
-          "label": "Richard H. Steinberg",
+          "label": "Roy Steinberg",
           "pubmed": {
             "source": "PubMed",
             "status": "matched",
