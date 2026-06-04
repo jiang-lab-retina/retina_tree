@@ -9,10 +9,16 @@ import streamlit as st
 from rtree.streamlit_render import render_custom_html
 
 ENV_ADMIN_PASSWORD = "RETINA_TREE_ADMIN_PASSWORD"
+DEFAULT_ADMIN_PASSWORD = "12345678"
 
 
 def get_admin_password() -> str:
-    """Password from environment (preferred) or Streamlit secrets — never from the repo."""
+    """Password from environment (preferred) or Streamlit secrets.
+
+    Falls back to a default passcode so the admin page is always protected.
+    Override it by setting the RETINA_TREE_ADMIN_PASSWORD env var or an
+    [app] admin_password secret.
+    """
     env_password = os.environ.get(ENV_ADMIN_PASSWORD, "").strip()
     if env_password:
         return env_password
@@ -20,10 +26,13 @@ def get_admin_password() -> str:
     try:
         app_cfg = st.secrets.get("app", {})
         if isinstance(app_cfg, dict):
-            return str(app_cfg.get("admin_password", "")).strip()
+            secret_password = str(app_cfg.get("admin_password", "")).strip()
+            if secret_password:
+                return secret_password
     except Exception:
         pass
-    return ""
+
+    return DEFAULT_ADMIN_PASSWORD
 
 
 def admin_password_configured() -> bool:
