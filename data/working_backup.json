@@ -4724,6 +4724,10 @@
             "confidence": "low",
             "url": "https://pubmed.ncbi.nlm.nih.gov/2843477/"
           }
+        },
+        {
+          "id": "LANE_BROWN",
+          "label": "Lane Brown"
         }
       ],
       "links": [
@@ -4738,6 +4742,10 @@
         [
           "LS",
           "FUNG"
+        ],
+        [
+          "LS",
+          "LANE_BROWN"
         ]
       ]
     },
